@@ -76,3 +76,20 @@ dets_p %>% ungroup() %>%
             per_above1 = sum(above1/length(above1))) %>% 
   write_csv("output/PSAT_SpeciesSummary.csv")
 
+
+
+
+# prep for suncalc --------------------------------------------------------
+
+# change acoustic data to fit PSAT format
+
+dets_p <- dets_p %>% select(-temp)
+
+dets_pa <- dets_a %>% 
+  rename(date_time = detection_timestamp_utc,
+         tag_id = transmitter_serial,
+         species = species_commonname,
+         press = sensor_value) %>% 
+  mutate(tag_type = "acoustic") %>% 
+  select(date_time, press, species, tag_type, tag_id) %>% 
+  rbind(dets_p)
