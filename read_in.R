@@ -104,4 +104,5 @@ dets_p <- bind_rows(combined_df_list)
 # Code for the CATS Cam ---------------------------------------------------
 
 list.files("DATA", pattern = "CATS")
+print("idk")
 
