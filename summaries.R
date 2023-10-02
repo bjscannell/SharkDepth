@@ -41,6 +41,7 @@ dets_a %>%
 
 dets_p <- dets_p %>% 
   filter(month(date_time) >= 6 & month(date_time) <= 9) %>%  # filter for June to September
+  filter(press < 150) %>%  # filter out the incorrect pressures
   mutate(press = ifelse(press < 0, 0, press)) %>%  # make neg pressures 0
   group_by(tag_id, date_time) %>% # remove duplicate date_times
   distinct() 
