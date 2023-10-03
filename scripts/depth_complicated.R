@@ -190,30 +190,37 @@ detsbro %>% group_by(`Transmitter Serial`) %>%
 # percentage above 2 ------------------------------------------------------
 ## also add 0 1
 
-tags <- unique(detsbro$`Transmitter Serial`)
+dets_a <- dets_a %>% arrange(detection_timestamp_utc) 
+
+tags <- unique(dets_a$transmitter_id)
 
 df <- data.frame()
 
 for (i in 1:length(tags)) {
-  
-info <- detsbro %>% filter(`Transmitter Serial` == tags[i]) %>%
-  mutate(timediff = as.numeric(`Date and Time (UTC)` - lag(`Date and Time (UTC)`)), #get the time difference between dets
-         `Sensor Value` = round(`Sensor Value`,1)) %>%    #round sensor values
+
+print(paste("working on tag", i, "of",length(tags)))
+    
+info <- dets_a %>% filter(transmitter_id == tags[i]) %>%
+  mutate(timediff = as.numeric(detection_timestamp_utc - lag(detection_timestamp_utc)), #get the time difference between dets
+         sensor_value = round(sensor_value,1)) %>%    #round sensor values
   filter(!is.na(timediff)) %>%  #gets rid of NAs
-  select(`Date and Time (UTC)`, Receiver, Transmitter.x, `Sensor Value` 
-         ,`Station Name`, Latitude, Longitude, species_commonname, timediff) %>%
+  select(detection_timestamp_utc, receiver_sn, transmitter_id, sensor_value 
+         ,array, latitude, longitude, species_commonname, timediff) %>%
   mutate(
-    group = cumsum(`Sensor Value` != lag(`Sensor Value`, default = first(`Sensor Value`)) |
+    group = cumsum(sensor_value != lag(sensor_value, default = first(sensor_value)) |
                      timediff > 300)) %>% #creates groups if by if time difference greater 300 or depth changes
   group_by(group) %>%
-  mutate(group_time_difference = max(`Date and Time (UTC)`) - min(`Date and Time (UTC)`),
+  mutate(group_time_difference = max(detection_timestamp_utc) - min(detection_timestamp_utc),
          group_time_difference = ifelse(group_time_difference == 0, 180, group_time_difference)) %>% ungroup() %>% 
-  group_by(`Sensor Value`) %>% 
+  group_by(sensor_value) %>% 
   summarise(depth_time = sum(group_time_difference)) %>%
   summarise(sn = tags[i],
             total_time = sum(depth_time),
-            time_above_2 = sum(depth_time[`Sensor Value` < 2]),
-            percentage_time_above_2 = (time_above_2 / total_time) * 100) 
+            time_above_2 = sum(depth_time[sensor_value < 2]),
+            time_above_1 = sum(depth_time[sensor_value < 1]),
+            percentage_time_above_2 = (time_above_2 / total_time) * 100,
+            percentage_time_above_1 = (time_above_1 / total_time) * 100)
 
 df <- rbind(df, info)
 }
+

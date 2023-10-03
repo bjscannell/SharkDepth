@@ -94,3 +94,24 @@ dets_pa <- dets_a %>%
   mutate(tag_type = "acoustic") %>% 
   select(date_time, press, species, tag_type, tag_id) %>% 
   rbind(dets_p)
+
+
+
+
+# get full species summaries ------------------------------------------------------
+
+dets_pa %>% ungroup() %>% 
+  group_by(species) %>% 
+  mutate(above1 = ifelse(press <1, 1,0),
+         above2 = ifelse(press <2, 1, 0)) %>% 
+  summarise(day_count = n_distinct(date(date_time)),
+            n_ind = n_distinct(tag_id),
+            n_obs = n(),
+            min_dep = min(press),
+            max_dep = max(press),
+            mean_dep = mean(press),
+            per_above2 = sum(above2/length(above2)),
+            per_above1 = sum(above1/length(above1))) %>% 
+  write_csv("output/Full_SpeciesSummary.csv")
+
+
