@@ -40,6 +40,9 @@ dets_a %>%
 # Code for PSATS ----------------------------------------------------------
 
 dets_p <- dets_p %>% 
+  group_by(tag_id) %>% 
+  filter(date_time > min(date_time) + hours(12)) %>%  # remove the first 12 hours for each tag
+  ungroup() %>% 
   filter(month(date_time) >= 6 & month(date_time) <= 9) %>%  # filter for June to September
   filter(press < 150) %>%  # filter out the incorrect pressures
   mutate(press = ifelse(press < 0, 0, press)) %>%  # make neg pressures 0
