@@ -74,13 +74,13 @@ for (i in 1:length(df_list)) {
     temp_df <- temp_df %>% 
       rename(date_time = matches("date_"),
              temp = matches("temp"),
-             press = matches("pres")) %>% 
+             press = matches("pres|dep")) %>% 
       mutate(date_time = as.POSIXct(date_time, format ="%m/%d/%Y/%H:%M:%S")) %>% # weird datetime format
       select(date_time, temp, press)
   } else {
     temp_df <- temp_df %>% 
       rename(temp = matches("temp"),
-             press = matches("pres")) %>%  
+             press = matches("pres|dep")) %>%  
       mutate(date_time = as.POSIXct(paste(date, time), format ="%Y-%m-%d %H:%M:%S")) %>% 
       select(date_time, temp, press)
   }
