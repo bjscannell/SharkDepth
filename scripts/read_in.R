@@ -13,30 +13,26 @@ source("https://raw.githubusercontent.com/bjscannell/lab_code/master/load_vue_cs
 # Code for Acoustics ------------------------------------------------------
 
 
-detections <- load_vue_files(project = "detect")
+detections <- read_csv("DATA/acoustic/acoustic_shark_detections_fall2023.csv") %>% clean_names()
 
-tags <- read_excel("tag/tags.xlsx") 
+shark_atag <- read_csv("tag/Sunrise_otn_metadata_tagging.csv") %>% clean_names()
 
-shark_sn <- read_excel("tag/shark_sn.xlsx", col_types = c("text", 
-                                                          "text", "text"))
 
 # filter for only depth measurements 
 # remove dogfish and a shark that died 
 # create a column by array
 
 dets <- detections %>%  
-  semi_join(tags, by = "Transmitter") %>% 
-  left_join(shark_sn, by = "Transmitter Serial") %>% filter(`Sensor Unit` == "m") %>% 
-  filter(Transmitter.x != "A69-9004-11623") %>% filter(species_commonname != "Smooth Dogfish") %>%  
-  separate(`Station Name`, "array") %>% 
-  mutate(array = ifelse(substr(array,1,1) == "R", paste("SUN"), array)) %>% clean_names()
+  left_join(shark_atag, by = "transmitter") %>% 
+  filter(sensor_unit == "m") %>%
+  filter(transmitter != "A69-9004-11623") %>% filter(common_name_e != "Smooth Dogfish") %>% 
+  filter(!grepl("KIS|YB",station_name))
 
 # set up the dataframe so we can run the false_detections() function
 fdet <- dets %>% 
-  filter(array != "YBAR" | array != "KIS") %>%  # remove inshore artificial reefs
   rename(detection_timestamp_utc = date_and_time_utc,
-         receiver_sn = receiver,
-         transmitter_id = transmitter_x) %>% 
+          receiver_sn = receiver,
+          transmitter_id = transmitter) %>% 
   mutate(transmitter_codespace = "A69-9004",
          sensor_value = ifelse(sensor_value < 0, 0, sensor_value))
 
@@ -48,7 +44,7 @@ dets_a <- glatos::false_detections(fdet, tf = 3600) %>% filter(passed_filter == 
 
 
 # List the Excel files in the folder
-excel_files <- list.files(path = "DATA", pattern = "\\.xlsx$", full.names = T)
+excel_files <- list.files(path = "DATA\psat", pattern = "\\.xlsx$", full.names = T)
 
 
 # Set up the empty containers
@@ -99,10 +95,4 @@ for (i in 1:length(df_list)) {
 # Combine all data frames into one using bind_rows
 dets_p <- bind_rows(combined_df_list)
 
-
-
-# Code for the CATS Cam ---------------------------------------------------
-
-list.files("DATA", pattern = "CATS")
-print("idk")
 
