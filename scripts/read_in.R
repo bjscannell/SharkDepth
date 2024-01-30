@@ -14,6 +14,7 @@ source("https://raw.githubusercontent.com/bjscannell/lab_code/master/load_vue_cs
 
 
 detections <- read_csv("DATA/acoustic/acoustic_shark_detections_fall2023.csv") %>% clean_names()
+# above csv is filtered through glatos
 
 shark_atag <- read_csv("tag/Sunrise_otn_metadata_tagging.csv") %>% clean_names()
 
@@ -23,18 +24,18 @@ shark_atag <- read_csv("tag/Sunrise_otn_metadata_tagging.csv") %>% clean_names()
 # create a column by array
 
 dets <- detections %>%  
-  left_join(shark_atag, by = "transmitter") %>% 
-  filter(sensor_unit == "m") %>%
+  left_join(shark_atag, by = c("transmitter_serial" = "tag_serial_number"), multiple = "all") %>% 
   filter(transmitter != "A69-9004-11623") %>% filter(common_name_e != "Smooth Dogfish") %>% 
   filter(!grepl("KIS|YB",station_name))
 
 # set up the dataframe so we can run the false_detections() function
 fdet <- dets %>% 
-  rename(detection_timestamp_utc = date_and_time_utc,
-          receiver_sn = receiver,
-          transmitter_id = transmitter) %>% 
+  #rename(detection_timestamp_utc = date_and_time_utc,
+        #  receiver_sn = receiver,
+       #   transmitter_id = transmitter) %>% 
   mutate(transmitter_codespace = "A69-9004",
-         sensor_value = ifelse(sensor_value < 0, 0, sensor_value))
+         sensor_value = ifelse(sensor_value < 0, 0, sensor_value)) %>% 
+filter(sensor_unit == "m") 
 
 dets_a <- glatos::false_detections(fdet, tf = 3600) %>% filter(passed_filter == 1)
 
@@ -44,7 +45,7 @@ dets_a <- glatos::false_detections(fdet, tf = 3600) %>% filter(passed_filter == 
 
 
 # List the Excel files in the folder
-excel_files <- list.files(path = "DATA\psat", pattern = "\\.xlsx$", full.names = T)
+excel_files <- list.files(path = "DATA/psat", pattern = "\\.xlsx$", full.names = T)
 
 
 # Set up the empty containers

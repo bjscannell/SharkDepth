@@ -25,7 +25,7 @@ dets_a %>%
 
 # individual
 dets_a %>% 
-  group_by(transmitter_id) %>% 
+  group_by(transmitter_serial) %>% 
   mutate(above1 = ifelse(sensor_value <1, 1,0),
          above2 = ifelse(sensor_value <2, 1, 0),
          above3 = ifelse(sensor_value <3, 1, 0)) %>% 
@@ -34,6 +34,7 @@ dets_a %>%
             min_dep = min(sensor_value),
             max_dep = max(sensor_value),
             mean_dep = mean(sensor_value),
+            median_dep = median(sensor_value),
             per_above3 = sum(above3/length(above3)),
             per_above2 = sum(above2/length(above2)),
             per_above1 = sum(above1/length(above1))) %>% 
@@ -95,7 +96,9 @@ dets_p %>% ungroup() %>%
 
 # change acoustic data to fit PSAT format
 
-dets_p <- dets_p %>% select(-temp) 
+dets_p <- dets_p %>% select(-temp) %>% 
+  mutate(species = ifelse(species == "SmoothHH", "Smooth Hammerhead", species))
+  
 
 dets_pa <- dets_a %>% 
   rename(date_time = detection_timestamp_utc,
