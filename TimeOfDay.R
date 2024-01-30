@@ -2,6 +2,9 @@ library(suncalc)
 library(dplyr)
 library(lubridate)
 
+# Adding time of day ------------------------------------------------------
+
+
 dets_pa_est <- dets_pa %>% 
   mutate(date_est = as.Date(with_tz(date_time, tzone = "EST")),
          date_times_est = with_tz(date_time, tzone = "EST")) 
@@ -16,6 +19,9 @@ dets_pa_est_tod <- dets_pa_est %>%
   left_join(longislandSUN, by = c("date_est" = "date")) %>%
   mutate(tod = ifelse(date_times_est >= sunrise & date_times_est < sunset, 'Day', 'Night')) %>% 
   select(-c(lat, lon, sunrise, sunset))
+
+
+# time of day plot --------------------------------------------------------
 
 
 dets_pa_est_tod %>% 
