@@ -50,3 +50,25 @@ dets_pa_est_tod %>%
   labs(x = "", y = "Depth (m)",
        fill = "",
        title = "Depth Distribution by time of day ")
+
+
+# Mirrored histogram ------------------------------------------------------
+
+df <- dets_pa_est_tod %>%
+  mutate(press_bin = cut(press, breaks=seq(0, max(press), by=5), include.lowest=TRUE)) %>%
+  group_by(tod, press_bin, species) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  mutate(percentage = count / sum(count) * 100)
+
+
+ggplot(df, aes(x = press_bin, y = ifelse(tod == "Day", percentage, -percentage), fill = tod)) +
+  geom_col() +
+  scale_y_continuous(labels = abs, breaks = seq(-20, 20, by = 5)) +
+  coord_flip() +
+  labs(x = "Depth", y = "Percentage of Detections", fill = "Time of Day") +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(hjust = 1)) +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  scale_fill_manual(values = c("Day" = "#ffde65", "Night" = "#1e3b7a")) +
+  facet_wrap(~species, scales="free_y")

@@ -100,3 +100,21 @@ dets_pa %>%
   
 
 
+
+# Individual depths -------------------------------------------------------
+# truly a beautiful bar plot garden 
+
+dets_pa %>% 
+  arrange(species, tag_id) %>%  # Arrange by species, then tagID
+  mutate(tag_id = factor(tag_id, levels = unique(tag_id))) %>%  # Reset factor levels to the order in the data frame
+  ggplot() +
+  geom_boxplot(aes(x = tag_id, y = press, 
+                   color = species)) +
+  theme_minimal() +
+  scale_color_manual(values = c("#b30000", "#7c1158", "#4421af",
+                                "#1a53ff", "#0d88e6", "#00b7c7",
+                                "#5ad45a", "#8be04e", "#ebdc78")) +
+  scale_y_continuous(breaks = seq(150,0, -25)) +
+  theme(axis.text.x=element_blank()) 
+  
+  
