@@ -109,12 +109,13 @@ dets_pa %>%
   mutate(tag_id = factor(tag_id, levels = unique(tag_id))) %>%  # Reset factor levels to the order in the data frame
   ggplot() +
   geom_boxplot(aes(x = tag_id, y = press, 
-                   color = species)) +
+                   color = species), outlier.shape = NA) +
   theme_minimal() +
   scale_color_manual(values = c("#b30000", "#7c1158", "#4421af",
                                 "#1a53ff", "#0d88e6", "#00b7c7",
                                 "#5ad45a", "#8be04e", "#ebdc78")) +
   scale_y_continuous(breaks = seq(150,0, -25)) +
-  theme(axis.text.x=element_blank()) 
+  theme(axis.text.x=element_blank()) +
+  scale_y_reverse()
   
   

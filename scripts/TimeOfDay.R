@@ -1,6 +1,8 @@
 library(suncalc)
 library(dplyr)
 library(lubridate)
+library(ggplot2)
+library(patchwork)
 
 dets_pa_est <- dets_pa %>% 
   mutate(date_est = as.Date(with_tz(date_time, tzone = "EST")),
@@ -54,21 +56,47 @@ dets_pa_est_tod %>%
 
 # Mirrored histogram ------------------------------------------------------
 
+# pressure
 df <- dets_pa_est_tod %>%
   mutate(press_bin = cut(press, breaks=seq(0, max(press), by=5), include.lowest=TRUE)) %>%
-  group_by(tod, press_bin, species) %>%
+  group_by(tod, press_bin,tag_type, species) %>% 
   summarise(count = n()) %>%
-  ungroup() %>%
+  ungroup() %>% group_by(species, tag_type) %>% 
+  mutate(percentage = count / sum(count) * 100)
+
+# depth
+df <- dets_pa_est_tod %>%
+  mutate(depth = press*-1,
+         depth_bin = cut(depth, breaks=seq(min(depth)-1, 0 , by=5), include.lowest=TRUE)) %>%
+  group_by(tod, depth_bin,tag_type, species) %>% 
+  summarise(count = n()) %>%
+  ungroup() %>% group_by(species, tag_type) %>% 
   mutate(percentage = count / sum(count) * 100)
 
 
-ggplot(df, aes(x = press_bin, y = ifelse(tod == "Day", percentage, -percentage), fill = tod)) +
+
+psat <- df %>% filter(tag_type == "psat/PSAT") %>% 
+ggplot(aes(x = depth_bin, y = ifelse(tod == "Day", percentage, -percentage), fill = tod)) +
   geom_col() +
-  scale_y_continuous(labels = abs, breaks = seq(-20, 20, by = 5)) +
+  scale_y_continuous(labels = abs, breaks = seq(20, -20, by = -5)) +
   coord_flip() +
-  labs(x = "Depth", y = "Percentage of Detections", fill = "Time of Day") +
+  labs(x = "Depth", y = "Percentage of Detections", fill = "Time of Day", title = "PSAT") +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(hjust = 1)) +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  scale_fill_manual(values = c("Day" = "#ffde65", "Night" = "#1e3b7a")) +
+  facet_wrap(~species, scales="free_y") 
+
+acoustic <- df %>% filter(tag_type == "acoustic") %>% 
+  ggplot(aes(x = depth_bin, y = ifelse(tod == "Day", percentage, -percentage), fill = tod)) +
+  geom_col() +
+  scale_y_continuous(labels = abs, breaks = seq(20, -20, by = -5)) +
+  coord_flip() +
+  labs(x = "Depth", y = "Percentage of Detections", fill = "Time of Day", title = "Acoustic") +
   theme_minimal() +
   theme(legend.position = "top", axis.text.x = element_text(hjust = 1)) +
   guides(fill = guide_legend(reverse = TRUE)) +
   scale_fill_manual(values = c("Day" = "#ffde65", "Night" = "#1e3b7a")) +
   facet_wrap(~species, scales="free_y")
+
+psat + acoustic
