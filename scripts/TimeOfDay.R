@@ -109,7 +109,7 @@ df <- dets_pa_est_tod %>%
   mutate(hour = hour(date_time),
           press = ifelse(press <= 0, 0.01, press))
 
-kruskal_result <- kruskal.test(press ~ , data = dets_pa_est_tod)
+kruskal_result <- kruskal.test(press ~ tod, data = dets_pa_est_tod)
 
 m0<- glm(press ~ hour, data=df, family = Gamma(link = log))
 

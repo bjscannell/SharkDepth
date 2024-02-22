@@ -82,7 +82,7 @@ p_matrix[is.na(p_matrix)] <- 1
 
 # Ordering matrix rows and columns by species names might help in readability
 species_order <- sort(unique(c(dunn_result$group1, dunn_result$group2)))
-p_matrix <- p_matrix[match(species_order, p_matrix$group1), match(species_order, names(p_matrix))]
+#p_matrix <- p_matrix[match(species_order, p_matrix$group1), match(species_order, names(p_matrix))]
 
 # Plotting heatmap
 heatmap_data <- melt(p_matrix, id.vars = "group1") %>% 
@@ -217,6 +217,8 @@ ggplot(ranef_df, aes(x = condval)) +  # 'condval' are the conditional values of 
   geom_histogram(binwidth = 0.2, fill = "blue", color = "black") +
   theme_minimal() +
   labs(x = "Random Effect (SharkID)", y = "Frequency", title = "Distribution of Individual Shark Variability")
+
+
 
 
 
