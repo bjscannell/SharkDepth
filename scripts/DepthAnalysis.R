@@ -48,10 +48,6 @@ ggplot() +
   labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Median Depth")
 
 
-
-
-
-
 # Non parametric ---------------------------------------------------------
 
 # Shapiro-Wilk test for normality by species
