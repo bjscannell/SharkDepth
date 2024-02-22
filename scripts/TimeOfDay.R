@@ -100,3 +100,22 @@ acoustic <- df %>% filter(tag_type == "acoustic") %>%
   facet_wrap(~species, scales="free_y")
 
 psat + acoustic
+
+
+
+# Diel detections ---------------------------------------------------------
+
+df <- dets_pa_est_tod %>% 
+  mutate(hour = hour(date_time),
+          press = ifelse(press <= 0, 0.01, press))
+
+kruskal_result <- kruskal.test(press ~ , data = dets_pa_est_tod)
+
+m0<- glm(press ~ hour, data=df, family = Gamma(link = log))
+
+summary(m0)
+
+m1<- glmer(press ~ hour*species + (1|tag_id), 
+           family = Gamma(link = log), data = df, 
+           glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+
