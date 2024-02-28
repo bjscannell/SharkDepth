@@ -195,30 +195,6 @@ ggplot(avg_probs, aes(x = reorder(species, -predicted_probs), y = predicted_prob
 # remove "" from around binomial
 
 
-# Calculate odds ratios
-posterior_samples$or_dusky <- exp(posterior_samples$b_Intercept)
-posterior_samples$or_sandbar <- exp(posterior_samples$b_speciesSandbar)
-posterior_samples$or_white <- exp(posterior_samples$b_speciesWhite)
-posterior_samples$or_spinner <- exp(posterior_samples$b_speciesSpinner)
-
-# Summarize for plotting (using tidybayes or dplyr)
-library(dplyr)
-or_summary <- posterior_samples %>%
-  select(starts_with("or")) %>%
-  tidyr::gather(key = "parameter", value = "or") %>%
-  group_by(parameter) %>%
-  median_qi(or)
-
-# Plotting odds ratios
-ggplot(or_summary, aes(x = parameter, y = or)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = .lower, ymax = .upper), width = 0.2) +
-  coord_flip() + # Flips the axes for a horizontal layout
-  ylab("Odds Ratio") +
-  xlab("Parameter") +
-  theme_minimal()
-
-
 # glmre -------------------------------------------------------------------
 df3m <- read_csv("df3m.csv")
 small <- c("Thresher", "Blacktip", "Tiger", "Smooth Hammerhead")
@@ -267,8 +243,6 @@ ggplot(posterior_long, aes(y = Iteration, x = Value)) +
 
 
 
-
-
 species_effects_df <- data.frame(posterior_means) %>%
   pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
   mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
@@ -288,7 +262,6 @@ ggplot(df, aes(x=p)) +
   facet_wrap(~species)
 
 
-library(ggplot2)
 
 ggplot(species_effects_df, aes(x = species, y = p_mean)) +
   geom_point(fill = "skyblue") +
