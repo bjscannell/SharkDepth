@@ -231,15 +231,15 @@ small_df <- df3m %>%
 
 
 
-m5 <- MCMCglmm(above3~species,
-               random=~tag_id,data=small_df,
-               family="categorical",
-               verbose=FALSE)
-
-m6 <- MCMCglmm(above3~species - 1,
-               random=~tag_id,data=df3m,
-               family="categorical",
-               verbose=FALSE)
+# m5 <- MCMCglmm(above3~species,
+#                random=~tag_id,data=small_df,
+#                family="categorical",
+#                verbose=FALSE)
+# 
+# m6 <- MCMCglmm(above3~species - 1,
+#                random=~tag_id,data=df3m,
+#                family="categorical",
+#                verbose=FALSE)
 
 summary(m6)
 my_data <- read.delim("summary_m6.txt")
