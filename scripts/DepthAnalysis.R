@@ -1,4 +1,7 @@
 
+
+
+
 library(ggplot2)
 library(dplyr)
 library(stringr)
@@ -7,6 +10,7 @@ library(reshape2)
 library(broom)
 library(car)
 library(rstatix)
+library(lme4)
 
 
 
@@ -186,37 +190,113 @@ ggplot(avg_probs, aes(x = reorder(species, -predicted_probs), y = predicted_prob
 
 
 # Adding Random effect ----------------------------------------------------
+# Ideas:
+# get rid of low n species
+# remove "" from around binomial
 
 
-m1<- glmer(above3 ~ species + (1|tag_id), family="binomial", data = df3m, glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
-summary(m0)
-exp(coef(m0))
-plot(m0)
+# Calculate odds ratios
+posterior_samples$or_dusky <- exp(posterior_samples$b_Intercept)
+posterior_samples$or_sandbar <- exp(posterior_samples$b_speciesSandbar)
+posterior_samples$or_white <- exp(posterior_samples$b_speciesWhite)
+posterior_samples$or_spinner <- exp(posterior_samples$b_speciesSpinner)
 
-# visualizing fixed effects 
+# Summarize for plotting (using tidybayes or dplyr)
+library(dplyr)
+or_summary <- posterior_samples %>%
+  select(starts_with("or")) %>%
+  tidyr::gather(key = "parameter", value = "or") %>%
+  group_by(parameter) %>%
+  median_qi(or)
+
+# Plotting odds ratios
+ggplot(or_summary, aes(x = parameter, y = or)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = .lower, ymax = .upper), width = 0.2) +
+  coord_flip() + # Flips the axes for a horizontal layout
+  ylab("Odds Ratio") +
+  xlab("Parameter") +
+  theme_minimal()
+
+
+# glmre -------------------------------------------------------------------
+df3m <- read_csv("df3m.csv")
+small <- c("Thresher", "Blacktip", "Tiger", "Smooth Hammerhead")
+# excluding these we get 1416435 rows
+small_df <- df3m %>% 
+  filter(! species %in% small) %>% 
+  sample_n(20000)  %>% 
+  mutate(species = as.factor(species),
+         tag_id = as.factor(tag_id))
+
+
+
+m5 <- MCMCglmm(above3~species,
+               random=~tag_id,data=small_df,
+               family="categorical",
+               verbose=FALSE)
+
+m6 <- MCMCglmm(above3~species - 1,
+               random=~tag_id,data=df3m,
+               family="categorical",
+               verbose=FALSE)
+
+summary(m6)
+my_data <- read.delim("summary_m6.txt")
+posterior_means <- read_csv("posterior_means.csv")
+posterior_means <- m6$Sol
+
+par(mfrow=c(9,2))
+plot(m6$Sol, auto.layout=T)
+
+posterior_samples <- as.data.frame(m6$Sol)
+
+posterior_long <- posterior_means %>% 
+  as.data.frame() %>%
+  rownames_to_column("Parameter") %>%
+  pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
+#mutate(Value = exp(Value))
+
+
+ggplot(posterior_long, aes(y = Iteration, x = Value)) +
+  stat_halfeye() +
+  theme_minimal() +
+  labs(title = "Posterior Distributions with Credible Intervals",
+       x = "Value",
+       y = "Parameter")
+
+
+
+
+
+species_effects_df <- data.frame(posterior_means) %>%
+  pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
+  mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
+  group_by(species) %>% 
+  summarise(p_mean = mean(p),
+            cilo = quantile(p, probs = 0.025),
+            cihi = quantile(p, probs = 0.975))
+
+
+df <- species_effects_df <- data.frame(posterior_means) %>%
+  pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
+  mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) 
+
+
+ggplot(df, aes(x=p)) +
+  geom_histogram() +
+  facet_wrap(~species)
+
+
 library(ggplot2)
 
-coef_df <- as.data.frame(confint(m0, method = "Wald"))  # Extracting confidence intervals
-coef_df$species <- rownames(coef_df)
-coef_df$OddsRatio <- exp(coef(m1))  # Convert log-odds to odds ratios
-
-ggplot(coef_df, aes(x = species, y = OddsRatio)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = exp(2.5 %), ymax = exp(97.5 %)), width = 0.2) +
-  coord_trans(y = "log") +  # Log scale for odds ratios
+ggplot(species_effects_df, aes(x = species, y = p_mean)) +
+  geom_point(fill = "skyblue") +
+  geom_errorbar(aes(ymin = cilo, ymax = cihi), width = 0.2) +
+  labs(title = "Predicted Probability of 'Above3' by Species",
+       x = "Species",
+       y = "Predicted Probability") +
   theme_minimal() +
-  labs(y = "Odds Ratio (with 95% CI)", x = "Shark Species", title = "Effect of Shark Species on Being Above 3 Meters")
-
-# visualizing random effects
-ranef_df <- as.data.frame(ranef(model)$SharkID)
-ggplot(ranef_df, aes(x = condval)) +  # 'condval' are the conditional values of the random effects
-  geom_histogram(binwidth = 0.2, fill = "blue", color = "black") +
-  theme_minimal() +
-  labs(x = "Random Effect (SharkID)", y = "Frequency", title = "Distribution of Individual Shark Variability")
-
-
-
-
-
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
