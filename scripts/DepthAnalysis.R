@@ -13,6 +13,9 @@ library(rstatix)
 library(lme4)
 
 
+# acoustic vs psat --------------------------------------------------------
+
+kruskal_result <- kruskal.test(median_press ~ tag_type, data = agg_df)
 
 # summary stats -----------------------------------------------------------
 agg_df <- dets_pa_est_tod %>% 
@@ -20,27 +23,28 @@ agg_df <- dets_pa_est_tod %>%
   group_by(tag_id) %>% 
   mutate(median_press = median(press),
          median_press = ifelse(median_press <= 0, 0.01, median_press)) %>% 
-  distinct(tag_id, .keep_all = T) %>% ungroup()
+  distinct(tag_id, .keep_all = T) %>% ungroup() %>% 
+  mutate(thresher = ifelse(species == "Thresher", 1,0)) %>% ungroup()
 
-stats_df <- agg_df %>%
+stats_df <- agg_df %>%  
   group_by(species) %>%
   summarise(
-    MedianDepth = median(press),
+    MedianDepth = median(median_press),
     Count = n(),
-    SD = sd(press)
-  )
+    SD = sd(press))
 
 
 ggplot() +
-  geom_boxplot(data=agg_df,aes(x=species,y=median_press),outlier.shape = NA) +
-  geom_text(data=stats_df, 
+  geom_boxplot(data=agg_df,
+               aes(x=species,y=median_press),outlier.shape = NA) +
+  geom_text(data=stats_df,
             aes(label = paste(round(MedianDepth,2)),
                 x = species, y = MedianDepth), vjust = 3, size =3) +
-  geom_text(data=stats_df, 
+  geom_text(data=stats_df,
             aes(label = paste("\nN:", Count),
-                x = species, y = 125), vjust = 2.5, size =3) +
+                x = species, y = 30), vjust = 2.8, size =3) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
-  scale_y_reverse() +
+  scale_y_reverse(limits = c(30, 0)) +
   theme_minimal(base_size = 12) +
   theme(plot.margin = margin(t = 10, r = 10, b = 50, l = 10, unit = "pt"),
         axis.title.x = element_text(margin = margin(t = 25, b = -20)),
@@ -152,42 +156,6 @@ ggplot(df3mI,
 df3m$species <- relevel(df3m$species, ref = "Dusky")
 
 
-m0<- glm(above3 ~ species, data=df3m, family=binomial)
-
-
-coef_estimates <- coef(summary(m0))
-odds_ratios <- exp(coef_estimates[, "Estimate"])
-conf_int <- exp(confint.default(m0)) # calculate confidence intervals
-
-
-species_names <- rownames(coef_estimates)
-df_plot <- data.frame(species = species_names, odds_ratio = odds_ratios,
-                      lower = conf_int[,1], upper = conf_int[,2])
-
-ggplot(df_plot, aes(x = reorder(species, -odds_ratio), y = odds_ratio)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
-  coord_flip() + # Flip coordinates for horizontal layout
-  labs(title = "Odds Ratios of Shark Species Being Observed Above 3 Meters",
-       x = "Species", y = "Odds Ratio") +
-  theme_minimal()
-
-# Predicted probabilites
-predict_probs <- predict(m0, type = "response")
-df3m$predicted_probs <- predict_probs
-
-# Aggregate predicted probabilities by species
-avg_probs <- aggregate(predicted_probs ~ species, data = df3m, mean)
-
-# Plotting
-ggplot(avg_probs, aes(x = reorder(species, -predicted_probs), y = predicted_probs)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
-  coord_flip() +
-  labs(title = "Predicted Probability of Being Observed Above 3 Meters by Species",
-       x = "Species", y = "Predicted Probability") +
-  theme_minimal()
-
-
 
 # Adding Random effect ----------------------------------------------------
 # Ideas:
@@ -218,8 +186,9 @@ small_df <- df3m %>%
 #                verbose=FALSE)
 
 summary(m6)
-my_data <- read.delim("summary_m6.txt")
-posterior_means <- read_csv("posterior_means.csv")
+model_summary <- read_txt("/Users/brittneyscannell/Desktop/tobey/data/summary_m6.txt")
+my_data <- read.delim("output/summary_m6.txt")
+posterior_means <- read_csv("output/posterior_means.csv")
 posterior_means <- m6$Sol
 
 par(mfrow=c(9,2))
@@ -252,14 +221,14 @@ species_effects_df <- data.frame(posterior_means) %>%
             cihi = quantile(p, probs = 0.975))
 
 
-df <- species_effects_df <- data.frame(posterior_means) %>%
-  pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
-  mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) 
+# species_effects_df <- data.frame(posterior_means) %>%
+#   pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
+#   mutate(p_mean = exp(posterior_draw)/(1+exp(posterior_draw))) 
 
 
-ggplot(df, aes(x=p)) +
-  geom_histogram() +
-  facet_wrap(~species)
+# ggplot(df, aes(x=p)) +
+#   geom_histogram() +
+#   facet_wrap(~species)
 
 
 

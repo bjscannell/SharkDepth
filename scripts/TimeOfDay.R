@@ -1,8 +1,4 @@
-library(suncalc)
-library(dplyr)
-library(lubridate)
-library(ggplot2)
-library(patchwork)
+
 
 dets_pa_est <- dets_pa %>% 
   mutate(date_est = as.Date(with_tz(date_time, tzone = "EST")),
@@ -99,7 +95,6 @@ acoustic <- df %>% filter(tag_type == "acoustic") %>%
   scale_fill_manual(values = c("Day" = "#ffde65", "Night" = "#1e3b7a")) +
   facet_wrap(~species, scales="free_y")
 
-psat + acoustic
 
 
 
@@ -115,7 +110,11 @@ m0<- glm(press ~ hour, data=df, family = Gamma(link = log))
 
 summary(m0)
 
+library(lme4)
 m1<- glmer(press ~ hour*species + (1|tag_id), 
            family = Gamma(link = log), data = df, 
            glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
 
+library(DHARMa)
+simulationOutput <- simulateResiduals(fittedModel = m1)
+plot(simulationOutput)
