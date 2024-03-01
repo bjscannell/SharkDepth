@@ -153,18 +153,57 @@ ggplot(df3mI,
   labs(title="Proportion of Time Spent in Top 3 Meters by Shark Species", x="Species", y="Proportion") +
   coord_flip() 
 
-df3m$species <- relevel(df3m$species, ref = "Dusky")
 
 
+# Time above 1m -----------------------------------------------------------
 
-# Adding Random effect ----------------------------------------------------
-# Ideas:
-# get rid of low n species
-# remove "" from around binomial
+df1m <- dets_pa_est_tod %>% 
+  filter(tod == "Day") %>% 
+  mutate(above1 = ifelse(press<=1,1,0)) %>% 
+  group_by(tag_id) %>% 
+  mutate(count = n()) %>% ungroup() %>% 
+  mutate(species = as.factor(species))
+
+df1mI <- dets_pa_est_tod %>% 
+  filter(tod == "Day") %>% 
+  mutate(above1 = ifelse(press<=1,1,0))  %>% 
+  group_by(tag_id) %>% 
+  summarize(
+    total_count = n(),
+    above1_count = sum(above1),
+    percent_above1 = (above1_count / total_count) 
+  ) #%>% filter(total_count > 100)
+
+df1mS <-dets_pa_est_tod %>% 
+  filter(tod == "Day") %>% 
+  mutate(above1 = ifelse(press<=1,1,0))  %>% 
+  group_by(species) %>% 
+  summarize(
+    total_count = n(),
+    above1_count = sum(above1),
+    percent_above1 = (above1_count / total_count) 
+  ) #%>% filter(total_count > 100)
+
+
+ggplot(df1mS,
+       aes(x=reorder(species, percent_above1), y=percent_above1, fill=species)) +
+  geom_bar(stat="identity") +
+  theme_minimal() +
+  labs(title="Proportion of Time Spent in Top 1 Meters by Shark Species", x="Species", y="Proportion") +
+  coord_flip() 
+
+ggplot(df1mI,
+       aes(x=reorder(tag_id, percent_above1), y=percent_above1)) +
+  geom_bar(stat="identity") +
+  theme_minimal() +
+  labs(title="Proportion of Time Spent in Top 1 Meters by Shark Species", x="Species", y="Proportion") +
+  coord_flip() 
+
+
 
 
 # glmre -------------------------------------------------------------------
-df3m <- read_csv("df3m.csv")
+df3m <- read_csv("/df3m.csv")
 small <- c("Thresher", "Blacktip", "Tiger", "Smooth Hammerhead")
 # excluding these we get 1416435 rows
 small_df <- df3m %>% 
@@ -174,18 +213,70 @@ small_df <- df3m %>%
          tag_id = as.factor(tag_id))
 
 
+# glmer -------------------------------------------------------------------
 
-# m5 <- MCMCglmm(above3~species,
-#                random=~tag_id,data=small_df,
-#                family="categorical",
-#                verbose=FALSE)
+m1 <- glmer(above3 ~ species + (1|tag_id) -1,
+            family="binomial", data = df3m,
+            glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+
+simulationOutput <- simulateResiduals(fittedModel = m1, plot = F)
+plot(simulationOutput)
+
+
+
+# Assuming m1 is your glmer model
+# Expand new_data as before if not already defined
+new_data <- with(df3m, expand.grid(species = unique(species)))
+
+# Predict log odds
+new_data$log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link")
+new_data$probability = predict(m1, newdata = new_data, re.form = NA, type = "response")
+
+
+# Calculate standard errors for predictions
+se_log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link", se.fit = TRUE)
+
+# Calculate confidence intervals for log odds
+alpha <- 0.05 # For 95% CI
+z <- qnorm(1 - alpha / 2)
+new_data$log_odds_lower <- new_data$log_odds - z * se_log_odds
+new_data$log_odds_upper <- new_data$log_odds + z * se_log_odds
+
+# Transform log odds CI to probability scale
+new_data$probability_lower <- plogis(new_data$log_odds_lower)
+new_data$probability_upper <- plogis(new_data$log_odds_upper)
+
+ggplot(new_data, aes(x = species)) +
+  geom_point(aes(y = log_odds)) +
+  geom_errorbar(aes(ymin = log_odds_lower, ymax = log_odds_upper), width = 0.2) +
+  theme_minimal() +
+  labs(title = "Log Odds for Fixed Covariates (Species) with Confidence Intervals",
+       x = "Species", y = "Log Odds")
+
+ggplot(new_data, aes(x = species)) +
+  geom_point(aes(y = probability)) +
+  geom_errorbar(aes(ymin = probability_lower, ymax = probability_upper), width = 0.2) +
+  theme_minimal() +
+  labs(title = "Predicted Probabilities for Fixed Covariates (Species) with Confidence Intervals",
+       x = "Species", y = "Probability")
+
+
+
+# mcmcm -------------------------------------------------------------------
+
 # 
-# m6 <- MCMCglmm(above3~species - 1,
+# m3 <- MCMCglmm(above3~species - 1,
 #                random=~tag_id,data=df3m,
 #                family="categorical",
 #                verbose=FALSE)
 
-summary(m6)
+# m1 <- MCMCglmm(above1~species - 1,
+#                random=~tag_id,data=df1m,
+#                family="categorical",
+#                verbose=FALSE)
+
+summary(m3)
+summary(m1)
 model_summary <- read_txt("/Users/brittneyscannell/Desktop/tobey/data/summary_m6.txt")
 my_data <- read.delim("output/summary_m6.txt")
 posterior_means <- read_csv("output/posterior_means.csv")
