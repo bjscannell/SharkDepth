@@ -31,22 +31,25 @@ stats_df <- agg_df %>%
   summarise(
     MedianDepth = median(median_press),
     Count = n(),
-    SD = sd(press))
+    SD = sd(press)) %>% 
+  mutate(thresher = ifelse(species == "Thresher", 1,0))
 
 
-ggplot() +
-  geom_boxplot(data=agg_df,
+all <-ggplot() +
+  geom_boxplot(data=filter(agg_df, thresher == 0),
                aes(x=species,y=median_press),outlier.shape = NA) +
-  geom_text(data=stats_df,
+  geom_label(data=filter(stats_df, thresher == 0),
             aes(label = paste(round(MedianDepth,2)),
-                x = species, y = MedianDepth), vjust = 3, size =3) +
-  geom_text(data=stats_df,
+                x = species, y = MedianDepth), vjust = 0.5, size =3,
+            fill = "white") +
+  geom_text(data=filter(stats_df, thresher == 0),
             aes(label = paste("\nN:", Count),
-                x = species, y = 30), vjust = 2.8, size =3) +
+                x = species, y = 30), vjust = 2.7, size =3) +
+  geom_hline(yintercept = 2, linetype = "dashed") +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(30, 0)) +
   theme_minimal(base_size = 12) +
-  theme(plot.margin = margin(t = 10, r = 10, b = 50, l = 10, unit = "pt"),
+  theme(plot.margin = margin(t = 10, r = 5, b = 50, l = 5, unit = "pt"),
         axis.title.x = element_text(margin = margin(t = 25, b = -20)),
         axis.text.x = element_text(face="bold"),
         panel.grid.minor = element_blank(),
@@ -54,6 +57,34 @@ ggplot() +
         axis.ticks = element_blank(),) +
   coord_cartesian(clip="off") +
   labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Median Depth")
+
+thresher <- ggplot() +
+  geom_boxplot(data=filter(agg_df, thresher == 1),
+               aes(x=species,y=median_press),outlier.shape = NA) +
+  geom_label(data=filter(stats_df, thresher == 1),
+             aes(label = paste(round(MedianDepth,2)),
+                 x = species, y = MedianDepth), vjust = 0.5, size =3,
+             fill = "white") +
+  geom_text(data=filter(stats_df, thresher == 1),
+            aes(label = paste("\nN:", Count),
+                x = species, y = 140), vjust = 2, size =3) +
+  geom_hline(yintercept = 2, linetype = "dashed") +
+  scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
+  scale_y_reverse(limits = c(140, 0)) +
+  theme_minimal(base_size = 12) +
+  theme(plot.margin = margin(t = 25, r = 25, b = 50, l = 25, unit = "pt"),
+        axis.title.y  = element_blank(),
+        axis.title.x  = element_blank(),
+        plot.title = element_blank(),
+        axis.text.x = element_text(face="bold"),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
+        axis.ticks = element_blank()) +
+  coord_cartesian(clip="off") +
+  labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Median Depth")
+
+
+x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(2, 1))
 
 
 # Non parametric ---------------------------------------------------------

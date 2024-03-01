@@ -104,18 +104,51 @@ dets_pa %>%
 # Individual depths -------------------------------------------------------
 # truly a beautiful bar plot garden 
 
-dets_pa %>% 
-  arrange(species, tag_id) %>%  # Arrange by species, then tagID
-  mutate(tag_id = factor(tag_id, levels = unique(tag_id))) %>%  # Reset factor levels to the order in the data frame
-  ggplot() +
+species_depth <- dets_pa %>% 
+  mutate(thresher_white = ifelse(species == "Thresher" | species == "White", 1,0)) %>% 
+  arrange(species, tag_id) %>% 
+  mutate(tag_id = factor(tag_id, levels = unique(tag_id))) 
+
+all <- ggplot(filter(species_depth, thresher_white == 0)) +
   geom_boxplot(aes(x = tag_id, y = press, 
                    color = species), outlier.shape = NA) +
   theme_minimal() +
-  scale_color_manual(values = c("#b30000", "#7c1158", "#4421af",
-                                "#1a53ff", "#0d88e6", "#00b7c7",
-                                "#5ad45a", "#8be04e", "#ebdc78")) +
-  scale_y_continuous(breaks = seq(150,0, -25)) +
-  theme(axis.text.x=element_blank()) +
+  theme(axis.text.x=element_blank(),
+        legend.position = "none") +
+  #coord_cartesian(ylim=c(40, 0)) 
+  ylim(c(40,0))
+  
+  
+thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
+  geom_boxplot(aes(x = tag_id, y = press, 
+                   color = species), outlier.shape = NA) +
+  theme_minimal() +
+  #scale_y_continuous(breaks = seq(150,0, -25)) +
+  theme(axis.text.x=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        legend.position = "none") +
   scale_y_reverse()
   
   
+
+x <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(2, 1))
+
+
+label_data <- species_depth %>%
+  filter(thresher_white == 0) %>%
+  group_by(species) %>%
+  summarize(min_tag_id = min(as.numeric(tag_id)), 
+            max_tag_id = max(as.numeric(tag_id)), 
+            .groups = 'drop') %>%
+  mutate(mid_point = (min_tag_id + max_tag_id) / 2) # Calculate the midpoint for label placement
+
+ggplot(filter(species_depth, thresher_white == 0)) +
+  geom_boxplot(aes(x = tag_id, y = press, color = species), outlier.shape = NA) +
+  geom_text(data = label_data, 
+            aes(x = mid_point, y = 20, label = species), 
+            color = "black", hjust = 0.5, vjust = -2) + # Adjust text color and position
+  theme_minimal() +
+  theme(axis.text.x=element_blank(),
+        legend.position = "none") +
+  coord_cartesian(ylim=c(40, 0))
