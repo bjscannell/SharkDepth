@@ -232,6 +232,48 @@ ggplot(df1mI,
 
 
 
+# dumbell 3 vs 1 ----------------------------------------------------------
+
+df_diff <- left_join(df3mS, df1mS, by = "species") %>%
+  select(species, percent_above3, percent_above1) %>% 
+  mutate(diff = percent_above3 - percent_above1) %>% 
+  pivot_longer(cols = c(percent_above3, percent_above1), names_to = "depth", values_to = "percent") 
+  
+
+stats <- df_diff %>%
+  group_by(depth) %>%
+  summarise(mean = mean(percent),
+            SE = sd(percent)) %>%
+  mutate(meanpos = mean + 1 *SE,
+         meanneg = mean - 1 *SE)
+
+stats_3 <- stats %>%
+  filter(depth == "percent_above3")
+
+stats_1 <- stats %>%
+  filter(depth == "percent_above1")
+
+diff <- df_diff %>% 
+  filter(depth == "percent_above1") %>% 
+  mutate(x_pos = percent + (diff/2)) 
+
+ggplot(df_diff) +
+  geom_segment(data = df3mS,
+               aes(x = percent_above3, y = reorder(species, percent_above3),
+                   yend = df1mS$species, xend = df1mS$percent_above1),
+              color = "#aeb6bf",
+              size = 4.5,
+              alpha = .5) +
+  geom_point(aes(x = percent, y = species, color = depth), size = 4) +
+  geom_text(data = filter(diff, diff > 0.08),
+            aes(label = paste("D: ",round(diff,3)), x = x_pos, y = species), 
+            color = "#4a4e4d",
+            size = 2.5) +
+  geom_vline(xintercept = stats_1$mean, linetype = "solid", size = .5, alpha = .8, color = "#009688") +
+  geom_vline(xintercept = stats_3$mean, color = "#762a83", linetype = "solid",  size = .5, alpha = .8) +
+  scale_color_manual(values = c("#009688","#762a83")) +
+  geom_text(x = stats_1$mean - 0.018 , y = 9.2, label = "MEAN", angle = 90, size = 2.5, color = "#009688", check_overlap = TRUE) +
+  geom_text(x = stats_3$mean - 0.018 , y = 9.2, label = "MEAN", angle = 90, size = 2.5, color = "#762a83", check_overlap = TRUE)
 
 # glmre -------------------------------------------------------------------
 df3m <- read_csv("/df3m.csv")
