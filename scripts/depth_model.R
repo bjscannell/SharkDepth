@@ -57,9 +57,9 @@ InitStage <- list(
 ParsStage <- c("b_species", "b_individual", "y_pred")  # Adding b_individual to parameters to monitor
 
 # MCMC settings
-ni <- 100000
+ni <- 55000
 nt <- 20
-nb <- 50000
+nb <- 15000
 nc <- 3
 
 
@@ -74,6 +74,7 @@ mod_3 <- jags(inits = InitStage,
               n.iter = ni,
               n.burnin = nb,
               DIC = TRUE)
+
 
 
 MCMCtrace(mod_2, params = "b_species")
