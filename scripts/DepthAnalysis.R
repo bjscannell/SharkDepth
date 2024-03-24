@@ -1,7 +1,5 @@
-
-
-
-
+library(tidyverse)
+library(MCMCglmm)
 library(ggplot2)
 library(dplyr)
 library(stringr)
@@ -338,45 +336,63 @@ ggplot(new_data, aes(x = species)) +
 # mcmcm -------------------------------------------------------------------
 
 # 
-# m3 <- MCMCglmm(above3~species - 1,
-#                random=~tag_id,data=df3m,
-#                family="categorical",
-#                verbose=FALSE)
+ m3 <- MCMCglmm(above3~species - 1,
+                random=~tag_id,data=df3m,
+                family="categorical",
+                verbose=FALSE)
 
-# m1 <- MCMCglmm(above1~species - 1,
-#                random=~tag_id,data=df1m,
-#                family="categorical",
-#                verbose=FALSE)
+ m1 <- MCMCglmm(above1~species - 1,
+                random=~tag_id,data=df1m,
+                family="categorical",
+                verbose=FALSE)
 
 summary(m3)
 summary(m1)
-model_summary <- read_txt("/Users/brittneyscannell/Desktop/tobey/data/summary_m6.txt")
-my_data <- read.delim("output/summary_m6.txt")
-posterior_means <- read_csv("output/posterior_means.csv")
-posterior_means <- m6$Sol
 
 par(mfrow=c(9,2))
 plot(m6$Sol, auto.layout=T)
 
-posterior_samples <- as.data.frame(m6$Sol)
 
-posterior_long <- posterior_means %>% 
+posterior_means3 <- m3$Sol
+posterior_means1 <- m1$Sol
+
+
+posterior_long3 <- posterior_means3 %>% 
+  as.data.frame() %>%
+  rownames_to_column("Parameter") %>%
+  pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
+#mutate(Value = exp(Value))
+
+posterior_long1 <- posterior_means1 %>% 
   as.data.frame() %>%
   rownames_to_column("Parameter") %>%
   pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
 #mutate(Value = exp(Value))
 
 
-ggplot(posterior_long, aes(y = Iteration, x = Value)) +
+ggplot(posterior_long3, aes(y = Iteration, x = Value)) +
   stat_halfeye() +
   theme_minimal() +
   labs(title = "Posterior Distributions with Credible Intervals",
        x = "Value",
        y = "Parameter")
 
+ggplot(posterior_long1, aes(y = Iteration, x = Value)) +
+  stat_halfeye() +
+  theme_minimal() +
+  labs(title = "Posterior Distributions with Credible Intervals",
+       x = "Value",
+       y = "Parameter")
 
+species_effects_df3 <- data.frame(posterior_means3) %>%
+  pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
+  mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
+  group_by(species) %>% 
+  summarise(p_mean = mean(p),
+            cilo = quantile(p, probs = 0.025),
+            cihi = quantile(p, probs = 0.975))
 
-species_effects_df <- data.frame(posterior_means) %>%
+species_effects_df1 <- data.frame(posterior_means1) %>%
   pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
   mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
   group_by(species) %>% 
@@ -406,3 +422,11 @@ ggplot(species_effects_df, aes(x = species, y = p_mean)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
+ggplot(species_effects_df1, aes(x = species, y = p_mean)) +
+  geom_point(fill = "skyblue") +
+  geom_errorbar(aes(ymin = cilo, ymax = cihi), width = 0.2) +
+  labs(title = "Predicted Probability of 'Above1' by Species",
+       x = "Species",
+       y = "Predicted Probability") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
