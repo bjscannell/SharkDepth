@@ -9,6 +9,7 @@ library(broom)
 library(car)
 library(rstatix)
 library(lme4)
+library(tidyr)
 
 
 # acoustic vs psat --------------------------------------------------------
