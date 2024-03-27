@@ -82,7 +82,7 @@ thresher <- ggplot() +
   coord_cartesian(clip="off") +
   labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Median Depth")
 
-
+library(cowplot)
 x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(2, 1))
 
 
@@ -143,6 +143,7 @@ df3m <- dets_pa_est_tod %>%
   group_by(tag_id) %>% 
   mutate(count = n()) %>% ungroup() %>% 
   mutate(species = as.factor(species))
+write.csv(df3m, "df3m.csv")
 
 ggplot(df3m) +
   geom_point(aes(x=tag_id, y = count)) +

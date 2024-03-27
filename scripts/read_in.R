@@ -18,8 +18,13 @@ source("https://raw.githubusercontent.com/bjscannell/lab_code/master/load_vue_cs
 # Code for Acoustics ------------------------------------------------------
 
 
-detections <- read_csv("DATA/acoustic/acoustic_shark_detections_fall2023.csv") %>% clean_names()
+detections <- read_csv("DATA/acoustic/acoustic_shark_detections_fall2023.csv") %>% clean_names() %>% as.data.frame()
 # above csv is filtered through glatos
+
+recLocations <- detections %>% 
+  group_by(station_name, latitude, longitude) %>% 
+  summarise(count = n())
+write.csv(recLocations, "output/receiverLocations.csv")
 
 shark_atag <- read_csv("tag/Sunrise_otn_metadata_tagging.csv") %>% clean_names()
 
@@ -29,8 +34,8 @@ shark_atag <- read_csv("tag/Sunrise_otn_metadata_tagging.csv") %>% clean_names()
 # create a column by array
 
 dets <- detections %>%  
-  left_join(shark_atag, by = c("transmitter_serial" = "tag_serial_number"), multiple = "all") %>% 
-  filter(transmitter != "A69-9004-11623") %>% filter(common_name_e != "Smooth Dogfish") %>% 
+  left_join(shark_atag, by = c("transmitter_serial" = "tag_serial_number"), multiple = "all", relationship = "many-to-many") %>% #relationship = "many-to-many"
+  filter(transmitter_id != "A69-9004-11623") %>% filter(common_name_e != "Smooth Dogfish") %>% 
   filter(!grepl("KIS|YB",station_name))
 
 # set up the dataframe so we can run the false_detections() function
