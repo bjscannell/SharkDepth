@@ -10,7 +10,8 @@ library(car)
 library(rstatix)
 library(lme4)
 library(tidyr)
-
+library(DHARMa)
+library(ggResidpanel)
 
 # acoustic vs psat --------------------------------------------------------
 
@@ -276,7 +277,7 @@ ggplot(df_diff) +
   geom_text(x = stats_3$mean - 0.018 , y = 9.2, label = "MEAN", angle = 90, size = 2.5, color = "#762a83", check_overlap = TRUE)
 
 # glmre -------------------------------------------------------------------
-df3m <- read_csv("/df3m.csv")
+#df3m <- read_csv("/df3m.csv")
 small <- c("Thresher", "Blacktip", "Tiger", "Smooth Hammerhead")
 # excluding these we get 1416435 rows
 small_df <- df3m %>% 
@@ -290,13 +291,37 @@ small_df <- df3m %>%
 
 m1 <- glmer(above3 ~ species + (1|tag_id) -1,
             family="binomial", data = df3m,
-            glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
-
+            glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))) #can add nAGQ = 0, sacrifices accuracy for speed in processing
+summary(m1)
+printCoefmat(coef(summary(m1)),digits=2)
+resid_panel(m1)
 simulationOutput <- simulateResiduals(fittedModel = m1, plot = F)
 plot(simulationOutput)
 
+m2<- glmer(above3 ~ species + (1|tag_id) -1, 
+           family=binomial(link = "logit"), data = df3m, 
+           glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+summary(m2)
+printCoefmat(coef(summary(m2)),digits=2)
+simulationOutput <- simulateResiduals(fittedModel = m2)
+plot(simulationOutput)
 
+m3 <- glmer(above3 ~ species + (1|tag_id) -1,
+            family="binomial", data = df3m,
+            glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
+                         optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) #more speed, sacrifices accuracy
+summary(m3)
 
+m4<- glmer(above3 ~ species + (1|tag_id) -1, 
+           family=binomial(link = "logit"), data = df3m, nAGQ=0, 
+           glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+summary(m4)
+
+anova(m2, m4)
+
+  #some other things to try            
+      verbose=TRUE, nAGQ=0, control=glmerControl(optimizer = "nloptwrap"
+                     
 # Assuming m1 is your glmer model
 # Expand new_data as before if not already defined
 new_data <- with(df3m, expand.grid(species = unique(species)))
