@@ -288,39 +288,55 @@ small_df <- df3m %>%
 
 
 # glmer -------------------------------------------------------------------
-
+startTime <- format(Sys.time(), "%H:%M:%S")
+startTime
 m1 <- glmer(above3 ~ species + (1|tag_id) -1,
             family="binomial", data = df3m,
             glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))) #can add nAGQ = 0, sacrifices accuracy for speed in processing
+endTime <- format(Sys.time(), "%H:%M:%S")
+endTime #17 minutes
+
 summary(m1)
 printCoefmat(coef(summary(m1)),digits=2)
 resid_panel(m1)
 simulationOutput <- simulateResiduals(fittedModel = m1, plot = F)
 plot(simulationOutput)
 
+startTime <- format(Sys.time(), "%H:%M:%S")
+startTime
 m2<- glmer(above3 ~ species + (1|tag_id) -1, 
            family=binomial(link = "logit"), data = df3m, 
            glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+endTime <- format(Sys.time(), "%H:%M:%S")
+endTime #10 minutes
 summary(m2)
 printCoefmat(coef(summary(m2)),digits=2)
 simulationOutput <- simulateResiduals(fittedModel = m2)
 plot(simulationOutput)
 
+startTime <- format(Sys.time(), "%H:%M:%S")
+startTime
 m3 <- glmer(above3 ~ species + (1|tag_id) -1,
             family="binomial", data = df3m,
             glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
                          optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) #more speed, sacrifices accuracy
+endTime <- format(Sys.time(), "%H:%M:%S")
+endTime #5 minutes
 summary(m3)
+resid_panel(m3)
 
+startTime <- format(Sys.time(), "%H:%M:%S")
+startTime
 m4<- glmer(above3 ~ species + (1|tag_id) -1, 
            family=binomial(link = "logit"), data = df3m, nAGQ=0, 
            glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+endTime <- format(Sys.time(), "%H:%M:%S")
+endTime #less than a minute...
 summary(m4)
 
-anova(m2, m4)
+anova(m1, m2, m3, m4)
 
-  #some other things to try            
-      verbose=TRUE, nAGQ=0, control=glmerControl(optimizer = "nloptwrap"
+  #some other things to try            verbose=TRUE, nAGQ=0, control=glmerControl(optimizer = "nloptwrap"
                      
 # Assuming m1 is your glmer model
 # Expand new_data as before if not already defined
