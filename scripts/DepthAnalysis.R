@@ -12,6 +12,7 @@ library(lme4)
 library(tidyr)
 library(DHARMa)
 library(ggResidpanel)
+library(cowplot)
 
 # acoustic vs psat --------------------------------------------------------
 
@@ -35,9 +36,11 @@ stats_df <- agg_df %>%
   mutate(thresher = ifelse(species == "Thresher", 1,0))
 
 
+
+
 all <-ggplot() +
   geom_boxplot(data=filter(agg_df, thresher == 0),
-               aes(x=species,y=median_press),outlier.shape = NA) +
+               aes(x=reorder(species,median_press) ,y=median_press),outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 0),
             aes(label = paste(round(MedianDepth,2)),
                 x = species, y = MedianDepth), vjust = 0.5, size =3,
@@ -45,7 +48,7 @@ all <-ggplot() +
   geom_text(data=filter(stats_df, thresher == 0),
             aes(label = paste("\nN:", Count),
                 x = species, y = 30), vjust = 2.7, size =3) +
-  geom_hline(yintercept = 2, linetype = "dashed") +
+  #geom_hline(yintercept = 3, linetype = "dashed") +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(30, 0)) +
   theme_minimal(base_size = 12) +
@@ -54,9 +57,11 @@ all <-ggplot() +
         axis.text.x = element_text(face="bold"),
         panel.grid.minor = element_blank(),
         legend.position = "none",
-        axis.ticks = element_blank(),) +
+        axis.ticks = element_blank(),
+        panel.background = element_rect(fill = "white", color = "white"),
+        plot.background = element_rect(fill = "white")) +
   coord_cartesian(clip="off") +
-  labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Median Depth")
+  labs(title = "", x = "Species", y = "Depth")
 
 thresher <- ggplot() +
   geom_boxplot(data=filter(agg_df, thresher == 1),
@@ -81,11 +86,11 @@ thresher <- ggplot() +
         legend.position = "none",
         axis.ticks = element_blank()) +
   coord_cartesian(clip="off") +
-  labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Median Depth")
+  labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Depth")
 
-library(cowplot)
-x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(2, 1))
+x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(4, 1))
 
+ggsave("plots/species_depth_box.png", x, dpi = 360, width = 14, height = 9, units = "in")
 
 # Non parametric ---------------------------------------------------------
 
@@ -335,10 +340,18 @@ plot(simulationOutput)
 
 startTime <- format(Sys.time(), "%H:%M:%S")
 startTime
+
+# This guy
 m3 <- glmer(above3 ~ species + (1|tag_id) -1,
             family="binomial", data = df3m,
             glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
                          optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) #more speed, sacrifices accuracy
+
+m1 <- glmer(above1 ~ species + (1|tag_id) -1,
+         family="binomial", data = df1m,
+         glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
+                      optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) 
+
 endTime <- format(Sys.time(), "%H:%M:%S")
 endTime #5 minutes
 summary(m3)
@@ -362,12 +375,12 @@ anova(m1, m2, m3, m4)
 new_data <- with(df3m, expand.grid(species = unique(species)))
 
 # Predict log odds
-new_data$log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link")
-new_data$probability = predict(m1, newdata = new_data, re.form = NA, type = "response")
+new_data$log_odds <- predict(m3, newdata = new_data, re.form = NA, type = "link")
+new_data$probability = predict(m3, newdata = new_data, re.form = NA, type = "response")
 
 
 # Calculate standard errors for predictions
-se_log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link", se.fit = TRUE)
+se_log_odds <- predict(m3, newdata = new_data, re.form = NA, type = "link", se.fit = TRUE)
 
 # Calculate confidence intervals for log odds
 alpha <- 0.05 # For 95% CI

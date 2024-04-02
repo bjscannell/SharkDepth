@@ -8,6 +8,7 @@ library(lubridate)
 library(gganimate)
 library(colorspace)
 library(scattermore)
+library(cowplot)
 
 
 # depth plot --------------------------------------------------------------
@@ -22,7 +23,7 @@ num_ind <- function(x) {
   return()
 }
 
-dets_pa %>% 
+x <- dets_pa %>% 
   ggplot(aes(x = species, y = press)) +
   ggdist::stat_halfeye(
     aes(color = species,
@@ -76,6 +77,8 @@ dets_pa %>%
     subtitle = "Distribution of depths from sharks tagged with acoustic and PSAT tags." ) +
   theme_minimal(base_size = 15) +
   theme(
+    panel.background = element_rect(fill = "white", color = "white"),
+    plot.background = element_rect(fill = "white"),
     panel.grid.minor = element_blank(),
     panel.grid.major.y = element_blank(),
     legend.position = "none",
@@ -95,8 +98,10 @@ dets_pa %>%
     plot.caption = element_markdown(
       color = "grey40", lineheight = 1.2,
       margin = margin(20, 0, 0, 0)),
-    plot.margin = margin(15, 15, 10, 15)
-  )
+    plot.margin = margin(15, 15, 10, 15)) 
+
+
+  ggsave("plots/full_depth_distr.png",x, dpi = 360, width = 20, height = 9, units = "in")
   
 
 
@@ -116,24 +121,32 @@ all <- ggplot(filter(species_depth, thresher_white == 0)) +
   theme(axis.text.x=element_blank(),
         legend.position = "none") +
   #coord_cartesian(ylim=c(40, 0)) 
-  ylim(c(40,0))
+  ylim(c(30,0)) +
+  theme(axis.text.x=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        legend.position = "none",
+        panel.background = element_rect(fill = "white", color = "white"),
+        plot.background = element_rect(fill = "white")) 
   
   
 thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
   geom_boxplot(aes(x = tag_id, y = press, 
                    color = species), outlier.shape = NA) +
   theme_minimal() +
-  #scale_y_continuous(breaks = seq(150,0, -25)) +
+  scale_y_reverse(breaks = seq(0,150, 25), position = "right") +
   theme(axis.text.x=element_blank(),
         axis.title.x=element_blank(),
         axis.title.y=element_blank(),
-        legend.position = "none") +
-  scale_y_reverse()
+        legend.position = "none",
+        panel.background = element_rect(fill = "white", color = "white"),
+        plot.background = element_rect(fill = "white")) 
   
   
 
-x <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(2, 1))
+x <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(3, 1))
 
+ggsave("plots/ind_depth_box.png", x, dpi = 360, width = 15, height = 9, units = "in")
 
 label_data <- species_depth %>%
   filter(thresher_white == 0) %>%
