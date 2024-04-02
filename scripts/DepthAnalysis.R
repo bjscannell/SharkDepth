@@ -47,7 +47,7 @@ all <-ggplot() +
             fill = "white") +
   geom_text(data=filter(stats_df, thresher == 0),
             aes(label = paste("\nN:", Count),
-                x = species, y = 30), vjust = 2.7, size =3) +
+                x = species, y = 30), vjust = 3.1, size =3) +
   #geom_hline(yintercept = 3, linetype = "dashed") +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(30, 0)) +
@@ -72,7 +72,7 @@ thresher <- ggplot() +
              fill = "white") +
   geom_text(data=filter(stats_df, thresher == 1),
             aes(label = paste("\nN:", Count),
-                x = species, y = 140), vjust = 2, size =3) +
+                x = species, y = 140), vjust = 3, size =3) +
   geom_hline(yintercept = 2, linetype = "dashed") +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(140, 0)) +
@@ -84,7 +84,9 @@ thresher <- ggplot() +
         axis.text.x = element_text(face="bold"),
         panel.grid.minor = element_blank(),
         legend.position = "none",
-        axis.ticks = element_blank()) +
+        axis.ticks = element_blank(),
+        panel.background = element_rect(fill = "white", color = "white"),
+        plot.background = element_rect(fill = "white")) +
   coord_cartesian(clip="off") +
   labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Depth")
 
