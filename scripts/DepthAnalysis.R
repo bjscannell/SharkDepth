@@ -144,7 +144,7 @@ df3m <- dets_pa_est_tod %>%
   group_by(tag_id) %>% 
   mutate(count = n()) %>% ungroup() %>% 
   mutate(species = as.factor(species))
-write.csv(df3m, "df3m.csv")
+
 
 ggplot(df3m) +
   geom_point(aes(x=tag_id, y = count)) +
@@ -258,23 +258,42 @@ diff <- df_diff %>%
   filter(depth == "percent_above1") %>% 
   mutate(x_pos = percent + (diff/2)) 
 
-ggplot(df_diff) +
+
+
+x <- ggplot(df_diff) +
+  geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = .5, alpha = .8, color = "#009688") +
+  geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = .5, alpha = .8) +
   geom_segment(data = df3mS,
-               aes(x = percent_above3, y = reorder(species, percent_above3),
-                   yend = df1mS$species, xend = df1mS$percent_above1),
+               aes(x = reorder(species, percent_above3), y = percent_above3,
+                   yend = df1mS$percent_above1, xend = df1mS$species),
               color = "#aeb6bf",
               size = 4.5,
-              alpha = .5) +
-  geom_point(aes(x = percent, y = species, color = depth), size = 4) +
+              alpha = .5) + 
+  geom_point(aes(x = species, y = percent, color = depth), size = 4) +
   geom_text(data = filter(diff, diff > 0.08),
-            aes(label = paste("D: ",round(diff,3)), x = x_pos, y = species), 
+            aes(label = paste("D: ",round(diff,3)), x = species, y = x_pos), 
             color = "#4a4e4d",
-            size = 2.5) +
-  geom_vline(xintercept = stats_1$mean, linetype = "solid", size = .5, alpha = .8, color = "#009688") +
-  geom_vline(xintercept = stats_3$mean, color = "#762a83", linetype = "solid",  size = .5, alpha = .8) +
-  scale_color_manual(values = c("#009688","#762a83")) +
-  geom_text(x = stats_1$mean - 0.018 , y = 9.2, label = "MEAN", angle = 90, size = 2.5, color = "#009688", check_overlap = TRUE) +
-  geom_text(x = stats_3$mean - 0.018 , y = 9.2, label = "MEAN", angle = 90, size = 2.5, color = "#762a83", check_overlap = TRUE)
+            angle = 90, size = 2.5) +
+  scale_color_manual(values = c("#009688","#762a83"),
+                     labels = c("1 Meter", "3 Meters")) +
+  geom_text(x = 1.2 , y = stats_1$mean - 0.018, 
+            label = "1 METER MEAN", 
+            angle = 0, size = 2.5, color = "#009688",
+            check_overlap = TRUE) +
+  geom_text(x = 1.2, y = stats_3$mean - 0.018,
+            label = "3 METER MEAN",
+            angle = 0, size = 2.5, color = "#762a83", 
+            check_overlap = TRUE) +
+  labs(title="",
+       x ="Species", y = "Percent Above", 
+       color = "Per Species\nAverage") +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+  theme_minimal() +
+  theme(
+    panel.background = element_rect(fill = "white", color = "white"),
+    plot.background = element_rect(fill = "white")) 
+
+ggsave("plots/depth_compare.png", x, dpi = 360, width = 12, height = 8, units = "in")
 
 # glmre -------------------------------------------------------------------
 #df3m <- read_csv("/df3m.csv")
