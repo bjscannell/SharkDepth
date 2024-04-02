@@ -302,16 +302,6 @@ x <- ggplot(df_diff) +
 
 ggsave("plots/depth_compare.png", x, dpi = 360, width = 12, height = 8, units = "in")
 
-# glmre -------------------------------------------------------------------
-#df3m <- read_csv("/df3m.csv")
-small <- c("Thresher", "Blacktip", "Tiger", "Smooth Hammerhead")
-# excluding these we get 1416435 rows
-small_df <- df3m %>% 
-  filter(! species %in% small) %>% 
-  sample_n(20000)  %>% 
-  mutate(species = as.factor(species),
-         tag_id = as.factor(tag_id))
-
 
 # glmer -------------------------------------------------------------------
 startTime <- format(Sys.time(), "%H:%M:%S")
@@ -357,6 +347,7 @@ m1 <- glmer(above1 ~ species + (1|tag_id) -1,
 endTime <- format(Sys.time(), "%H:%M:%S")
 endTime #5 minutes
 summary(m3)
+conf_intervals3m <- confint(m3)
 resid_panel(m3)
 
 startTime <- format(Sys.time(), "%H:%M:%S")
@@ -374,15 +365,15 @@ anova(m1, m2, m3, m4)
                      
 # Assuming m1 is your glmer model
 # Expand new_data as before if not already defined
-new_data <- with(df3m, expand.grid(species = unique(species)))
+new_data <- with(df1m, expand.grid(species = unique(species)))
 
 # Predict log odds
-new_data$log_odds <- predict(m3, newdata = new_data, re.form = NA, type = "link")
-new_data$probability = predict(m3, newdata = new_data, re.form = NA, type = "response")
+new_data$log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link")
+new_data$probability = predict(m1, newdata = new_data, re.form = NA, type = "response")
 
 
 # Calculate standard errors for predictions
-se_log_odds <- predict(m3, newdata = new_data, re.form = NA, type = "link", se.fit = TRUE)
+se_log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link", se.fit = TRUE)
 
 # Calculate confidence intervals for log odds
 alpha <- 0.05 # For 95% CI
