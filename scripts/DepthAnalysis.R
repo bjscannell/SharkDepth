@@ -498,3 +498,31 @@ ggplot(species_effects_df1, aes(x = species, y = p_mean)) +
        y = "Predicted Probability") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# a zibeta? ---------------------------------------------------------------
+
+df <- df3m %>% group_by(tag_id) %>% 
+  summarise(n_obs = n(),
+            x= sum(above3), 
+            species = first(species)) %>%  
+  mutate(y = x/n_obs,
+         y = ifelse(y == 1, y-.001,y))
+
+
+fit1 <- brm(above3 ~ species + (1|tag_id),
+            data = df3m, family = bernoulli(link="logit"))
+
+
+fit1 <- brm(y ~ species + (1|tag_id),
+            data = df, family = zero_inflated_beta(link = "logit"))
+
+summary(fit1)
+
+plot(fit1)
+
+plot(conditional_effects(fit1, effects = "speciesDusky"))
+
+get_variables(fit1)
+
+
