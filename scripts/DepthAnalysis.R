@@ -39,19 +39,21 @@ stats_df <- agg_df %>%
 
 
 all <-ggplot() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  geom_hline(yintercept = 3, linetype = "dashed") +
   geom_boxplot(data=filter(agg_df, thresher == 0),
-               aes(x=reorder(species,median_press) ,y=median_press),outlier.shape = NA) +
+               aes(x=reorder(species,median_press) ,y=median_press),
+               fill = "grey", outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 0),
-            aes(label = paste(round(MedianDepth,2)),
+            aes(label = paste(round(MedianDepth,1)),
                 x = species, y = MedianDepth), vjust = 0.5, size =3,
             fill = "white") +
   geom_text(data=filter(stats_df, thresher == 0),
-            aes(label = paste("\nN:", Count),
-                x = species, y = 30), vjust = 3.1, size =3) +
-  #geom_hline(yintercept = 3, linetype = "dashed") +
+            aes(label = paste("\nN =", Count),
+                x = species, y = 32), vjust = 3.1, size =3) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(30, 0)) +
-  theme_minimal(base_size = 12) +
+  theme_classic(base_size = 16) +
   theme(plot.margin = margin(t = 10, r = 5, b = 50, l = 5, unit = "pt"),
         axis.title.x = element_text(margin = margin(t = 25, b = -20)),
         axis.text.x = element_text(face="bold"),
@@ -65,18 +67,20 @@ all <-ggplot() +
 
 thresher <- ggplot() +
   geom_boxplot(data=filter(agg_df, thresher == 1),
-               aes(x=species,y=median_press),outlier.shape = NA) +
+               aes(x=species,y=median_press),
+               fill = "grey", outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 1),
-             aes(label = paste(round(MedianDepth,2)),
+             aes(label = paste(format(round(MedianDepth, digits=1), nsmall = 1)),
                  x = species, y = MedianDepth), vjust = 0.5, size =3,
              fill = "white") +
   geom_text(data=filter(stats_df, thresher == 1),
-            aes(label = paste("\nN:", Count),
+            aes(label = paste("\nN =", Count),
                 x = species, y = 140), vjust = 3, size =3) +
-  geom_hline(yintercept = 2, linetype = "dashed") +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  geom_hline(yintercept = 3, linetype = "dashed") +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(140, 0)) +
-  theme_minimal(base_size = 12) +
+  theme_classic(base_size = 16) +
   theme(plot.margin = margin(t = 25, r = 25, b = 50, l = 25, unit = "pt"),
         axis.title.y  = element_blank(),
         axis.title.x  = element_blank(),
@@ -93,6 +97,7 @@ thresher <- ggplot() +
 x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(4, 1))
 
 ggsave("plots/species_depth_box.png", x, dpi = 360, width = 14, height = 9, units = "in")
+
 
 # Non parametric ---------------------------------------------------------
 
