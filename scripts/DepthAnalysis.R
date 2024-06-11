@@ -39,18 +39,18 @@ stats_df <- agg_df %>%
 
 
 all <-ggplot() +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  geom_hline(yintercept = 3, linetype = "dashed") +
+  geom_hline(yintercept = 1, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
+  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
   geom_boxplot(data=filter(agg_df, thresher == 0),
                aes(x=reorder(species,median_press) ,y=median_press),
                fill = "grey", outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 0),
             aes(label = paste(round(MedianDepth,1)),
-                x = species, y = MedianDepth), vjust = 0.5, size =3,
+                x = species, y = MedianDepth), vjust = 0.5, size = 4,
             fill = "white") +
   geom_text(data=filter(stats_df, thresher == 0),
             aes(label = paste("\nN =", Count),
-                x = species, y = 32), vjust = 3.1, size =3) +
+                x = species, y = 30), vjust = 2.8, size = 4) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(30, 0)) +
   theme_classic(base_size = 16) +
@@ -71,17 +71,17 @@ thresher <- ggplot() +
                fill = "grey", outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 1),
              aes(label = paste(format(round(MedianDepth, digits=1), nsmall = 1)),
-                 x = species, y = MedianDepth), vjust = 0.5, size =3,
+                 x = species, y = MedianDepth), vjust = 0.5, size = 4,
              fill = "white") +
   geom_text(data=filter(stats_df, thresher == 1),
             aes(label = paste("\nN =", Count),
-                x = species, y = 140), vjust = 3, size =3) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  geom_hline(yintercept = 3, linetype = "dashed") +
+                x = species, y = 140), vjust = 2.55, size = 4) +
+  geom_hline(yintercept = 1, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
+  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(140, 0)) +
   theme_classic(base_size = 16) +
-  theme(plot.margin = margin(t = 25, r = 25, b = 50, l = 25, unit = "pt"),
+  theme(plot.margin = margin(t = 30, r = 5, b = 81, l = 5, unit = "pt"),
         axis.title.y  = element_blank(),
         axis.title.x  = element_blank(),
         plot.title = element_blank(),
