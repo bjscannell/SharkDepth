@@ -13,16 +13,14 @@ x <- dets_pa %>%
 
 
 x <- ggplot(x, aes(x = date, y = tag_id,
-              color = species, shape = tag_type)) +
-  geom_point(size = 1) +
-  scale_shape_manual(values = c(1, 4)) + 
-  scale_color_discrete_qualitative() +
+              color = tag_type), size = 2, shape =21) +
+  geom_point() +
   labs(title = "",
        x = "Date",
        y = "Individual",
-       color = "Species",
-       shape = "Tag Type") +
-  theme_minimal(base_size = 15) +
+       color = "Tag Type") +
+  scale_color_manual(labels = c("Acoustic", "PSAT"), values = c("#4c72b0", "#dd8452")) +
+  theme_classic(base_size = 16) +
   theme(
     panel.grid.minor = element_blank(),
     panel.grid.major.y = element_blank(),
@@ -35,3 +33,4 @@ x <- ggplot(x, aes(x = date, y = tag_id,
 
 
 ggsave("plots/abacus.png", x, dpi = 360, width = 15, height = 8, units = "in")
+

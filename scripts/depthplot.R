@@ -115,9 +115,11 @@ species_depth <- dets_pa %>%
   mutate(tag_id = factor(tag_id, levels = unique(tag_id))) 
 
 all <- ggplot(filter(species_depth, thresher_white == 0)) +
-  geom_boxplot(aes(x = tag_id, y = press, 
-                   color = species), outlier.shape = NA) +
-  theme_minimal() +
+  geom_hline(yintercept = 1, linetype = "dashed", size = .8, color = "#009688") +
+  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8) +
+  geom_boxplot(aes(x = tag_id, y = press), 
+                   fill = "grey", outlier.shape = NA) +
+  theme_classic(base_size=16) +
   theme(axis.text.x=element_blank(),
         legend.position = "none") +
   #coord_cartesian(ylim=c(40, 0)) 
@@ -131,9 +133,11 @@ all <- ggplot(filter(species_depth, thresher_white == 0)) +
   
   
 thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
-  geom_boxplot(aes(x = tag_id, y = press, 
-                   color = species), outlier.shape = NA) +
-  theme_minimal() +
+  geom_hline(yintercept = 1, linetype = "dashed", size = .8,  color = "#009688") +
+  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8) +
+  geom_boxplot(aes(x = tag_id, y = press), 
+                   fill = "grey",outlier.shape = NA) +
+  theme_classic(base_size=16) +
   scale_y_reverse(breaks = seq(0,150, 25), position = "right") +
   theme(axis.text.x=element_blank(),
         axis.title.x=element_blank(),

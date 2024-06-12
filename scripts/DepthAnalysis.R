@@ -273,19 +273,19 @@ diff <- df_diff %>%
 
 
 x <- ggplot(df_diff) +
-  geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = .5, alpha = .8, color = "#009688") +
-  geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = .5, alpha = .8) +
+  geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
+  geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
   geom_segment(data = df3mS,
                aes(x = reorder(species, percent_above3), y = percent_above3,
                    yend = df1mS$percent_above1, xend = df1mS$species),
               color = "#aeb6bf",
               size = 4.5,
               alpha = .5) + 
-  geom_point(aes(x = species, y = percent, color = depth), size = 4) +
+  geom_point(aes(x = species, y = percent, color = depth), size = 4.5) +
   geom_text(data = filter(diff, diff > 0.08),
-            aes(label = paste("D: ",round(diff,3)), x = species, y = x_pos), 
+            aes(label = paste("\u0394 ",round(diff,3)*100, "%"), x = species, y = x_pos), 
             color = "#4a4e4d",
-            angle = 90, size = 2.5) +
+            angle = 90, size = 3) +
   scale_color_manual(values = c("#009688","#762a83"),
                      labels = c("1 Meter", "3 Meters")) +
   geom_text(x = 1.2 , y = stats_1$mean - 0.018, 
@@ -300,7 +300,7 @@ x <- ggplot(df_diff) +
        x ="Species", y = "Percent Above", 
        color = "Per Species\nAverage") +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
-  theme_minimal() +
+  theme_classic(base_size = 16) +
   theme(
     panel.background = element_rect(fill = "white", color = "white"),
     plot.background = element_rect(fill = "white")) 
