@@ -20,7 +20,7 @@ x <- ggplot(x, aes(x = date, y = tag_id,
        y = "Individual",
        color = "Tag Type") +
   scale_color_manual(labels = c("Acoustic", "PSAT"), values = c("#4c72b0", "#dd8452")) +
-  theme_classic(base_size = 16) +
+  theme_classic(base_size = 20) +
   theme(
     panel.grid.minor = element_blank(),
     panel.grid.major.y = element_blank(),
