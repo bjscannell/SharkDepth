@@ -50,10 +50,10 @@ all <-ggplot() +
             fill = "white") +
   geom_text(data=filter(stats_df, thresher == 0),
             aes(label = paste("\nN =", Count),
-                x = species, y = 30), vjust = 2.8, size = 4) +
+                x = species, y = 30), vjust = 3, size = 4) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(30, 0)) +
-  theme_classic(base_size = 16) +
+  theme_classic(base_size = 20) +
   theme(plot.margin = margin(t = 10, r = 5, b = 50, l = 5, unit = "pt"),
         axis.title.x = element_text(margin = margin(t = 25, b = -20)),
         axis.text.x = element_text(face="bold"),
@@ -75,12 +75,12 @@ thresher <- ggplot() +
              fill = "white") +
   geom_text(data=filter(stats_df, thresher == 1),
             aes(label = paste("\nN =", Count),
-                x = species, y = 140), vjust = 2.55, size = 4) +
+                x = species, y = 140), vjust = 2.65, size = 4) +
   geom_hline(yintercept = 1, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
   geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(140, 0)) +
-  theme_classic(base_size = 16) +
+  theme_classic(base_size = 20) +
   theme(plot.margin = margin(t = 30, r = 5, b = 81, l = 5, unit = "pt"),
         axis.title.y  = element_blank(),
         axis.title.x  = element_blank(),
@@ -290,17 +290,17 @@ x <- ggplot(df_diff) +
                      labels = c("1 Meter", "3 Meters")) +
   geom_text(x = 1.2 , y = stats_1$mean - 0.018, 
             label = "1 METER MEAN", 
-            angle = 0, size = 2.5, color = "#009688",
+            angle = 0, size = 3, color = "#009688",
             check_overlap = TRUE) +
   geom_text(x = 1.2, y = stats_3$mean - 0.018,
             label = "3 METER MEAN",
-            angle = 0, size = 2.5, color = "#762a83", 
+            angle = 0, size = 3, color = "#762a83", 
             check_overlap = TRUE) +
   labs(title="",
        x ="Species", y = "Percent Above", 
        color = "Per Species\nAverage") +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
-  theme_classic(base_size = 16) +
+  theme_classic(base_size = 20) +
   theme(
     panel.background = element_rect(fill = "white", color = "white"),
     plot.background = element_rect(fill = "white")) 
