@@ -36,7 +36,7 @@ x <- dets_pa %>%
   geom_boxplot(
     aes(color = species,
         #color = after_scale(darken(color, .1, space = "HLS")),
-       fill = after_scale(desaturate(lighten(color, .8), .4))),
+        fill = after_scale(desaturate(lighten(color, .8), .4))),
     width = .42, 
     outlier.shape = NA) +
   geom_scattermore(
@@ -47,14 +47,14 @@ x <- dets_pa %>%
     #size = 2,
     alpha = 0.3,
     position = position_jitter(seed = 1, width = .12)) +
- # geom_point(
+  # geom_point(
   #  aes(fill = species),
-    #color = "transparent",
-   # shape = 21,
-    #stroke = .4,
-    #size = 2,
-    #alpha = .3,
-    #position = position_jitter(seed = 1, width = .12)) +
+  #color = "transparent",
+  # shape = 21,
+  #stroke = .4,
+  #size = 2,
+  #alpha = .3,
+  #position = position_jitter(seed = 1, width = .12)) +
   stat_summary(
     geom = "text",
     fun = "median",
@@ -84,8 +84,8 @@ x <- dets_pa %>%
     legend.position = "none",
     axis.ticks = element_blank(),
     #axis.text.x = element_text(
-     # color = (darken(pal, .1, space = "HLS")), 
-      #size = 18),
+    # color = (darken(pal, .1, space = "HLS")), 
+    #size = 18),
     axis.text.y = element_text(size = 15),
     axis.title.x = element_text(margin = margin(t = 10),
                                 size = 16),
@@ -101,71 +101,96 @@ x <- dets_pa %>%
     plot.margin = margin(15, 15, 10, 15)) 
 
 
-  ggsave("plots/full_depth_distr.png",x, dpi = 360, width = 20, height = 9, units = "in")
-  
+ggsave("plots/full_depth_distr.png",x, dpi = 360, width = 20, height = 9, units = "in")
+
 
 
 
 # Individual depths -------------------------------------------------------
 # truly a beautiful bar plot garden 
 
-species_depth <- dets_pa %>% 
-  mutate(thresher_white = ifelse(species == "Thresher" | species == "White", 1,0)) %>% 
+species_depth <- agg_df %>% 
+  mutate(thresher_white = ifelse(species == "Thresher" | species == "White" | species == "Tiger", 1,0))
+
+species_count <- species_depth %>% group_by(species) %>%  summarize(count = n()) %>% arrange(count)  
+
+species_depth <-species_depth %>% 
   arrange(species, tag_id) %>% 
-  mutate(tag_id = factor(tag_id, levels = unique(tag_id))) 
+  mutate(species = factor(species, levels = species_count$species),
+         tag_id = factor(tag_id, levels = unique(tag_id))) %>% ungroup() %>% group_by(species) %>% 
+  mutate(species_count = n()) %>% 
+  arrange(species_count)
+
+
+
 
 all <- ggplot(filter(species_depth, thresher_white == 0)) +
   geom_hline(yintercept = 1, linetype = "dashed", size = .8, color = "#009688") +
   geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8) +
-  geom_boxplot(aes(x = tag_id, y = press), 
-                   fill = "grey", outlier.shape = NA) +
+  geom_segment(aes(x = reorder(tag_id, species_count), y = quant10,
+                   yend = quant90, xend = reorder(tag_id, species_count)),
+               color = "grey38",
+               size = 0.8,
+               lineend='round') +
+  geom_point(aes(x = reorder(tag_id, species_count), y = median_press, color = species), size = 4) +
+  geom_point(aes(x = reorder(tag_id, species_count), y = median_press), shape = 1,size = 4 ,colour = "black") +
+  annotate("text",
+           x = c(1.5, 1.5),
+           y = c(1, 3),
+           label = c("1", "3"),
+           color = c( "#009688","#762a83"),
+           size=6, 
+           hjust = 2.8) +
+  scale_fill_discrete_qualitative(palette = "Dark 3") +
   theme_classic(base_size=20) +
-  theme(axis.text.x=element_blank(),
-        legend.position = "none") +
-  #coord_cartesian(ylim=c(40, 0)) 
-  ylim(c(30,0)) +
-  theme(axis.text.x=element_blank(),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
-        legend.position = "none",
+  scale_y_reverse(breaks = seq(0,30, 5), position = "left") +
+  scale_x_discrete(labels=filter(species_depth, thresher_white == 1)$tag_id) +
+  scale_colour_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#ffff33", "#ff7f00", "#984ea3")) +
+  labs(title="",
+       x ="Individual", y = "Depth (m)") +
+  guides(color = guide_legend(nrow = 1)) +
+  coord_cartesian(clip = 'off') +
+  theme(plot.margin = margin(t = 2, r = 5, b = 21, l = 5, unit = "pt"),
+        axis.title.x = element_text(hjust = 0.7, vjust = -0.1, size = 26),
+        axis.text.x=element_blank(),
+        axis.text.y = element_text(size = 17),
+        axis.title.y = element_text(size = 26),
+        legend.title = element_blank(),
+        legend.position = c(0.5, 1),
+        legend.direction = "horizontal",
         panel.background = element_rect(fill = "white", color = "white"),
         plot.background = element_rect(fill = "white")) 
-  
-  
+
+
 thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
   geom_hline(yintercept = 1, linetype = "dashed", size = .8,  color = "#009688") +
   geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8) +
-  geom_boxplot(aes(x = tag_id, y = press), 
-                   fill = "grey",outlier.shape = NA) +
+  geom_segment(aes(x = reorder(tag_id, species_count), y = quant10,
+                   yend = quant90, xend = reorder(tag_id, species_count)),
+               color = "grey38",
+               size = 0.8,
+               lineend='round') +
+  geom_point(aes(x = reorder(tag_id, species_count), y = median_press, color = species), size = 4) +
+  geom_point(aes(x = reorder(tag_id, species_count), y = median_press), shape = 1,size = 4, colour = "black") +
+  scale_fill_discrete_qualitative(palette = "Dark 3") +
   theme_classic(base_size=20) +
-  scale_y_reverse(breaks = seq(0,150, 25), position = "right") +
-  theme(axis.text.x=element_blank(),
+  scale_x_discrete(labels=filter(species_depth, thresher_white == 1)$tag_id)+
+  scale_y_reverse(breaks = seq(0,150, 25), position = "left") +
+  scale_colour_manual(values = c("#a65628", "#f781bf", "#999999")) +
+  theme(plot.margin = margin(t = 35, r = 5, b = 45, l = 5, unit = "pt"),,
+        axis.text.x=element_blank(),
         axis.title.x=element_blank(),
         axis.title.y=element_blank(),
-        legend.position = "none",
+        axis.text.y = element_text(size = 17),
+        legend.title = element_blank(),
+        legend.position = c(0.45, 1),
+        legend.direction = "horizontal",
         panel.background = element_rect(fill = "white", color = "white"),
         plot.background = element_rect(fill = "white")) 
-  
-  
 
-x <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(3, 1))
 
-ggsave("plots/ind_depth_box.png", x, dpi = 360, width = 15, height = 9, units = "in")
 
-label_data <- species_depth %>%
-  filter(thresher_white == 0) %>%
-  group_by(species) %>%
-  summarize(min_tag_id = min(as.numeric(tag_id)), 
-            max_tag_id = max(as.numeric(tag_id)), 
-            .groups = 'drop') %>%
-  mutate(mid_point = (min_tag_id + max_tag_id) / 2) # Calculate the midpoint for label placement
+y <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(3, 1))
 
-ggplot(filter(species_depth, thresher_white == 0)) +
-  geom_boxplot(aes(x = tag_id, y = press, color = species), outlier.shape = NA) +
-  geom_text(data = label_data, 
-            aes(x = mid_point, y = 20, label = species), 
-            color = "black", hjust = 0.5, vjust = -2) + # Adjust text color and position
-  theme_minimal() +
-  theme(axis.text.x=element_blank(),
-        legend.position = "none") +
-  coord_cartesian(ylim=c(40, 0))
+ggsave("plots/ind_depth_box.png", y, dpi = 360, width = 15, height = 9, units = "in")
+

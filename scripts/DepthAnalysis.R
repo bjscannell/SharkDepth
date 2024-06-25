@@ -11,8 +11,21 @@ library(rstatix)
 library(lme4)
 library(tidyr)
 library(DHARMa)
+library(tidyr)
 library(ggResidpanel)
 library(cowplot)
+
+
+# Species Grand Means -----------------------------------------------------
+
+grand_means <- dets_pa_est_tod %>%
+  group_by(tag_id) %>% 
+  mutate(ind_mean = mean(press)) %>% ungroup() %>% 
+  group_by(species) %>% 
+  summarise(species_mean = mean(ind_mean),
+            species_sd = sd(ind_mean))
+
+sd(grand_means$species_mean)
 
 # acoustic vs psat --------------------------------------------------------
 
@@ -23,7 +36,9 @@ agg_df <- dets_pa_est_tod %>%
   filter(tod == "Day") %>% 
   group_by(tag_id) %>% 
   mutate(median_press = median(press),
-         median_press = ifelse(median_press <= 0, 0.01, median_press)) %>% 
+         median_press = ifelse(median_press <= 0, 0.01, median_press),
+         quant10 = quantile(press, probs = 0.10),
+         quant90 = quantile(press, probs = 0.90)) %>% 
   distinct(tag_id, .keep_all = T) %>% ungroup() %>% 
   mutate(thresher = ifelse(species == "Thresher", 1,0)) %>% ungroup()
 
@@ -39,31 +54,42 @@ stats_df <- agg_df %>%
 
 
 all <-ggplot() +
-  geom_hline(yintercept = 1, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
-  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
+  geom_hline(yintercept = 1, linetype = "dashed", size = 1.2, alpha = .8, color = "#009688") +
+  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = 1.2, alpha = .8) +
+  geom_text(aes(x = 0, y = 1,
+                label = "1"),
+            size = 6, color = "#009688", hjust = 1.9) +
+  geom_text(aes(x = 0, y = 3,
+                label = "3"),
+            size = 6, color = "#762a83", hjust = 1.9) +
   geom_boxplot(data=filter(agg_df, thresher == 0),
                aes(x=reorder(species,median_press) ,y=median_press),
                fill = "grey", outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 0),
-            aes(label = paste(round(MedianDepth,1)),
-                x = species, y = MedianDepth), vjust = 0.5, size = 4,
-            fill = "white") +
+             aes(label = paste(round(MedianDepth,1)),
+                 x = species, y = MedianDepth), vjust = 0.5, size = 5,
+             fill = "white") +
   geom_text(data=filter(stats_df, thresher == 0),
             aes(label = paste("\nN =", Count),
-                x = species, y = 30), vjust = 3, size = 4) +
+                x = species, y = 25), vjust = -0, size = 7) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
-  scale_y_reverse(limits = c(30, 0)) +
+  scale_y_reverse(limits = c(25, 0),
+                  breaks = seq(25, 0, by = -5),) +
   theme_classic(base_size = 20) +
-  theme(plot.margin = margin(t = 10, r = 5, b = 50, l = 5, unit = "pt"),
-        axis.title.x = element_text(margin = margin(t = 25, b = -20)),
-        axis.text.x = element_text(face="bold"),
+  theme(plot.margin = margin(t = 2, r = 5, b = 21, l = 5, unit = "pt"),
+        axis.title.x = element_text(vjust = 5, hjust = 0.6, size = 26),
+        axis.text.x = element_text(face="bold",
+                                   angle = 45,
+                                   vjust = 0.65,
+                                   size = 20),
+        axis.title.y = element_text(size = 26),
+        axis.text.y = element_text(size = 17),
         panel.grid.minor = element_blank(),
         legend.position = "none",
-        axis.ticks = element_blank(),
         panel.background = element_rect(fill = "white", color = "white"),
         plot.background = element_rect(fill = "white")) +
   coord_cartesian(clip="off") +
-  labs(title = "", x = "Species", y = "Depth")
+  labs(title = "", x = "Species", y = "Depth (m)")
 
 thresher <- ggplot() +
   geom_boxplot(data=filter(agg_df, thresher == 1),
@@ -71,28 +97,32 @@ thresher <- ggplot() +
                fill = "grey", outlier.shape = NA) +
   geom_label(data=filter(stats_df, thresher == 1),
              aes(label = paste(format(round(MedianDepth, digits=1), nsmall = 1)),
-                 x = species, y = MedianDepth), vjust = 0.5, size = 4,
+                 x = species, y = MedianDepth), vjust = 0.5, size = 5,
              fill = "white") +
   geom_text(data=filter(stats_df, thresher == 1),
             aes(label = paste("\nN =", Count),
-                x = species, y = 140), vjust = 2.65, size = 4) +
-  geom_hline(yintercept = 1, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
-  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
+                x = species, y = 140), vjust = -0, size = 7) +
+  geom_hline(yintercept = 1, linetype = "dashed", size = 1.2, alpha = 1, color = "#009688") +
+  
+  geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = 1.2, alpha = .8) +
   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
   scale_y_reverse(limits = c(140, 0)) +
   theme_classic(base_size = 20) +
-  theme(plot.margin = margin(t = 30, r = 5, b = 81, l = 5, unit = "pt"),
+  theme(plot.margin = margin(t = 35, r = 5, b = 92, l = 5, unit = "pt"),
         axis.title.y  = element_blank(),
         axis.title.x  = element_blank(),
         plot.title = element_blank(),
-        axis.text.x = element_text(face="bold"),
+        axis.text.y = element_text(size = 17),
+        axis.text.x = element_text(face="bold",
+                                   angle = 45,
+                                   vjust = 0.45,
+                                   size = 20),
         panel.grid.minor = element_blank(),
         legend.position = "none",
-        axis.ticks = element_blank(),
         panel.background = element_rect(fill = "white", color = "white"),
         plot.background = element_rect(fill = "white")) +
   coord_cartesian(clip="off") +
-  labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Depth")
+  labs(title = "Distribution of Median Depth by Species", x = "Species", y = "Depth (m)")
 
 x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(4, 1))
 
@@ -157,10 +187,9 @@ df3m <- dets_pa_est_tod %>%
   mutate(count = n()) %>% ungroup() %>% 
   mutate(species = as.factor(species))
 
-
-ggplot(df3m) +
-  geom_point(aes(x=tag_id, y = count)) +
-  scale_y_log10()
+# ggplot(df3m) +
+#   geom_point(aes(x=tag_id, y = count)) +
+#   scale_y_log10()
 
 df3mI <- dets_pa_est_tod %>% 
   filter(tod == "Day") %>% 
@@ -183,19 +212,19 @@ df3mS <-dets_pa_est_tod %>%
   ) #%>% filter(total_count > 100)
 
 
-ggplot(df3mS,
-       aes(x=reorder(species, percent_above3), y=percent_above3, fill=species)) +
-  geom_bar(stat="identity") +
-  theme_minimal() +
-  labs(title="Proportion of Time Spent in Top 3 Meters by Shark Species", x="Species", y="Proportion") +
-  coord_flip() 
-
-ggplot(df3mI,
-       aes(x=reorder(tag_id, percent_above3), y=percent_above3)) +
-  geom_bar(stat="identity") +
-  theme_minimal() +
-  labs(title="Proportion of Time Spent in Top 3 Meters by Shark Species", x="Species", y="Proportion") +
-  coord_flip() 
+# ggplot(df3mS,
+#        aes(x=reorder(species, percent_above3), y=percent_above3, fill=species)) +
+#   geom_bar(stat="identity") +
+#   theme_minimal() +
+#   labs(title="Proportion of Time Spent in Top 3 Meters by Shark Species", x="Species", y="Proportion") +
+#   coord_flip() 
+# 
+# ggplot(df3mI,
+#        aes(x=reorder(tag_id, percent_above3), y=percent_above3)) +
+#   geom_bar(stat="identity") +
+#   theme_minimal() +
+#   labs(title="Proportion of Time Spent in Top 3 Meters by Shark Species", x="Species", y="Proportion") +
+#   coord_flip() 
 
 
 
@@ -229,19 +258,19 @@ df1mS <-dets_pa_est_tod %>%
   ) #%>% filter(total_count > 100)
 
 
-ggplot(df1mS,
-       aes(x=reorder(species, percent_above1), y=percent_above1, fill=species)) +
-  geom_bar(stat="identity") +
-  theme_minimal() +
-  labs(title="Proportion of Time Spent in Top 1 Meters by Shark Species", x="Species", y="Proportion") +
-  coord_flip() 
-
-ggplot(df1mI,
-       aes(x=reorder(tag_id, percent_above1), y=percent_above1)) +
-  geom_bar(stat="identity") +
-  theme_minimal() +
-  labs(title="Proportion of Time Spent in Top 1 Meters by Shark Species", x="Species", y="Proportion") +
-  coord_flip() 
+# ggplot(df1mS,
+#        aes(x=reorder(species, percent_above1), y=percent_above1, fill=species)) +
+#   geom_bar(stat="identity") +
+#   theme_minimal() +
+#   labs(title="Proportion of Time Spent in Top 1 Meters by Shark Species", x="Species", y="Proportion") +
+#   coord_flip() 
+# 
+# ggplot(df1mI,
+#        aes(x=reorder(tag_id, percent_above1), y=percent_above1)) +
+#   geom_bar(stat="identity") +
+#   theme_minimal() +
+#   labs(title="Proportion of Time Spent in Top 1 Meters by Shark Species", x="Species", y="Proportion") +
+#   coord_flip() 
 
 
 
@@ -251,7 +280,7 @@ df_diff <- left_join(df3mS, df1mS, by = "species") %>%
   select(species, percent_above3, percent_above1) %>% 
   mutate(diff = percent_above3 - percent_above1) %>% 
   pivot_longer(cols = c(percent_above3, percent_above1), names_to = "depth", values_to = "percent") 
-  
+
 
 stats <- df_diff %>%
   group_by(depth) %>%
@@ -273,35 +302,46 @@ diff <- df_diff %>%
 
 
 x <- ggplot(df_diff) +
-  geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = .8, alpha = .8, color = "#009688") +
-  geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = .8, alpha = .8) +
+  geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = 1, alpha = .8, color = "#009688") +
+  geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = 1, alpha = .8) +
   geom_segment(data = df3mS,
                aes(x = reorder(species, percent_above3), y = percent_above3,
                    yend = df1mS$percent_above1, xend = df1mS$species),
-              color = "#aeb6bf",
-              size = 4.5,
-              alpha = .5) + 
-  geom_point(aes(x = species, y = percent, color = depth), size = 4.5) +
+               color = "black",
+               size = 1) + 
+  geom_point(aes(x = species, y = percent, color = depth), size = 6) +
+  geom_point(aes(x = species, y = percent), shape = 1,size = 6,colour = "black") +
   geom_text(data = filter(diff, diff > 0.08),
             aes(label = paste("\u0394 ",round(diff,3)*100, "%"), x = species, y = x_pos), 
             color = "#4a4e4d",
-            angle = 90, size = 3) +
+            angle = 90, size = 6, vjust = 1.8) +
   scale_color_manual(values = c("#009688","#762a83"),
-                     labels = c("1 Meter", "3 Meters")) +
-  geom_text(x = 1.2 , y = stats_1$mean - 0.018, 
+                     labels = c("1 m", "3 m")) +
+  geom_text(x = 1 , y = stats_1$mean - 0.018, 
             label = "1 METER MEAN", 
-            angle = 0, size = 3, color = "#009688",
-            check_overlap = TRUE) +
-  geom_text(x = 1.2, y = stats_3$mean - 0.018,
+            angle = 0, size = 4, color = "#009688",
+            fontface = "bold", check_overlap = TRUE) +
+  geom_text(x = 1, y = stats_3$mean - 0.018,
             label = "3 METER MEAN",
-            angle = 0, size = 3, color = "#762a83", 
-            check_overlap = TRUE) +
+            angle = 0, size = 4, color = "#762a83", 
+            fontface = "bold", check_overlap = TRUE) +
   labs(title="",
-       x ="Species", y = "Percent Above", 
-       color = "Per Species\nAverage") +
+       x ="Species", y = "Percent Above") +
+  #color = "Per Species\nAverage") +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic(base_size = 20) +
   theme(
+    axis.text.x = element_text(face="bold",
+                               angle = 35,
+                               margin = margin(t = 25),
+                               size = 17),
+    axis.text.y = element_text(size = 17),
+    axis.title.x = element_text(vjust = 7, size = 26),
+    axis.title.y = element_text(size = 26),
+    legend.position = c(0.1, 0.98),
+    legend.title = element_blank(),
+    #legend.justification = c("left", "top"),
+    legend.direction = "horizontal",
     panel.background = element_rect(fill = "white", color = "white"),
     plot.background = element_rect(fill = "white")) 
 
@@ -345,9 +385,9 @@ m3 <- glmer(above3 ~ species + (1|tag_id) -1,
                          optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) #more speed, sacrifices accuracy
 
 m1 <- glmer(above1 ~ species + (1|tag_id) -1,
-         family="binomial", data = df1m,
-         glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
-                      optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) 
+            family="binomial", data = df1m,
+            glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
+                         optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) 
 
 endTime <- format(Sys.time(), "%H:%M:%S")
 endTime #5 minutes
@@ -366,8 +406,8 @@ summary(m4)
 
 anova(m1, m2, m3, m4)
 
-  #some other things to try            verbose=TRUE, nAGQ=0, control=glmerControl(optimizer = "nloptwrap"
-                     
+#some other things to try            verbose=TRUE, nAGQ=0, control=glmerControl(optimizer = "nloptwrap"
+
 # Assuming m1 is your glmer model
 # Expand new_data as before if not already defined
 new_data <- with(df1m, expand.grid(species = unique(species)))
@@ -409,15 +449,15 @@ ggplot(new_data, aes(x = species)) +
 # mcmcm -------------------------------------------------------------------
 
 # 
- m3 <- MCMCglmm(above3~species - 1,
-                random=~tag_id,data=df3m,
-                family="categorical",
-                verbose=FALSE)
+m3 <- MCMCglmm(above3~species - 1,
+               random=~tag_id,data=df3m,
+               family="categorical",
+               verbose=FALSE)
 
- m1 <- MCMCglmm(above1~species - 1,
-                random=~tag_id,data=df1m,
-                family="categorical",
-                verbose=FALSE)
+m1 <- MCMCglmm(above1~species - 1,
+               random=~tag_id,data=df1m,
+               family="categorical",
+               verbose=FALSE)
 
 summary(m3)
 summary(m1)
@@ -529,5 +569,4 @@ plot(fit1)
 plot(conditional_effects(fit1, effects = "speciesDusky"))
 
 get_variables(fit1)
-
 
