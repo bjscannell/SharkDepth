@@ -177,7 +177,7 @@ thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
   scale_x_discrete(labels=filter(species_depth, thresher_white == 1)$tag_id)+
   scale_y_reverse(breaks = seq(0,150, 25), position = "left") +
   scale_colour_manual(values = c("#a65628", "#f781bf", "#999999")) +
-  theme(plot.margin = margin(t = 35, r = 5, b = 45, l = 5, unit = "pt"),,
+  theme(plot.margin = margin(t = 35, r = 5, b = 51, l = 5, unit = "pt"),,
         axis.text.x=element_blank(),
         axis.title.x=element_blank(),
         axis.title.y=element_blank(),
