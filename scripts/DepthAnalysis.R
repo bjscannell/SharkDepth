@@ -378,11 +378,49 @@ plot(simulationOutput)
 startTime <- format(Sys.time(), "%H:%M:%S")
 startTime
 
+set.seed(32)
 # This guy
 m3 <- glmer(above3 ~ species + (1|tag_id) -1,
             family="binomial", data = df3m,
             glmerControl(optimizer = "optimx", calc.derivs = FALSE, 
                          optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE))) #more speed, sacrifices accuracy
+# for Bri
+summary(m3)
+Anova(m3)
+emmeans(m3, list(pairwise ~ species), adjust = "tukey")
+
+
+library(ggplot2)
+library(lme4)
+library(dplyr)
+library(broom.mixed)
+
+# Extract fixed effects from the model summary
+fixed_effects <- tidy(m3)
+
+# Add species names as a factor for plotting
+fixed_effects <- fixed_effects %>%
+  filter(term != "(Intercept)") %>%
+  mutate(species = factor(term, levels = term))
+
+# Calculate the 95% confidence intervals
+fixed_effects <- fixed_effects %>%
+  mutate(
+    conf.low = estimate - 1.96 * std.error,
+    conf.high = estimate + 1.96 * std.error
+  )
+
+# Plot the fixed effects using ggplot2
+ggplot(fixed_effects, aes(x = species, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  labs(
+    title = "Fixed Effects Estimates",
+    x = "Species",
+    y = "Estimate"
+  ) +
+  theme_minimal() +
+  coord_flip() 
 
 m1 <- glmer(above1 ~ species + (1|tag_id) -1,
             family="binomial", data = df1m,
