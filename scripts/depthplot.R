@@ -112,14 +112,19 @@ ggsave("plots/full_depth_distr.png",x, dpi = 360, width = 20, height = 9, units 
 species_depth <- agg_df %>% 
   mutate(thresher_white = ifelse(species == "Thresher" | species == "White" | species == "Tiger", 1,0))
 
+species_median <- species_depth %>%
+  group_by(species) %>%
+  summarize(median_depth = median(median_press, na.rm = TRUE)) %>%
+  arrange(median_depth)
+
 species_count <- species_depth %>% group_by(species) %>%  summarize(count = n()) %>% arrange(count)  
 
 species_depth <-species_depth %>% 
   arrange(species, tag_id) %>% 
-  mutate(species = factor(species, levels = species_count$species),
-         tag_id = factor(tag_id, levels = unique(tag_id))) %>% ungroup() %>% group_by(species) %>% 
-  mutate(species_count = n()) %>% 
-  arrange(species_count)
+  mutate(species = factor(species, levels = species_median$species),
+         tag_id = factor(tag_id, levels = unique(tag_id))) %>% ungroup() %>% group_by(species)# %>% 
+  #mutate(species_count = n()) %>% 
+  #arrange(species_count)
 
 
 
@@ -127,13 +132,13 @@ species_depth <-species_depth %>%
 all <- ggplot(filter(species_depth, thresher_white == 0)) +
   geom_hline(yintercept = 1, linetype = "dashed", size = .8, color = "#009688") +
   geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8) +
-  geom_segment(aes(x = reorder(tag_id, species_count), y = quant10,
-                   yend = quant90, xend = reorder(tag_id, species_count)),
+  geom_segment(aes(x = tag_id, y = quant10,
+                   yend = quant90, xend = tag_id),
                color = "grey38",
                size = 0.8,
                lineend='round') +
-  geom_point(aes(x = reorder(tag_id, species_count), y = median_press, color = species), size = 4) +
-  geom_point(aes(x = reorder(tag_id, species_count), y = median_press), shape = 1,size = 4 ,colour = "black") +
+  geom_point(aes(x = tag_id, y = median_press, color = species), size = 4) +
+  geom_point(aes(x = tag_id, y = median_press), shape = 1,size = 4 ,colour = "black") +
   annotate("text",
            x = c(1.5, 1.5),
            y = c(1, 3),
@@ -165,13 +170,13 @@ all <- ggplot(filter(species_depth, thresher_white == 0)) +
 thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
   geom_hline(yintercept = 1, linetype = "dashed", size = .8,  color = "#009688") +
   geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = .8) +
-  geom_segment(aes(x = reorder(tag_id, species_count), y = quant10,
-                   yend = quant90, xend = reorder(tag_id, species_count)),
+  geom_segment(aes(x = tag_id, y = quant10,
+                   yend = quant90, xend =tag_id),
                color = "grey38",
                size = 0.8,
                lineend='round') +
-  geom_point(aes(x = reorder(tag_id, species_count), y = median_press, color = species), size = 4) +
-  geom_point(aes(x = reorder(tag_id, species_count), y = median_press), shape = 1,size = 4, colour = "black") +
+  geom_point(aes(x = tag_id, y = median_press, color = species), size = 4) +
+  geom_point(aes(x = tag_id, y = median_press), shape = 1,size = 4, colour = "black") +
   scale_fill_discrete_qualitative(palette = "Dark 3") +
   theme_classic(base_size=20) +
   scale_x_discrete(labels=filter(species_depth, thresher_white == 1)$tag_id)+
