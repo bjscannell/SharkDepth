@@ -54,6 +54,9 @@ stats_df <- agg_df %>%
 kruskal_result <- kruskal.test(median_press ~ tag_type, data = agg_df)
 
 
+# depth plot by species -------------------------------------------------------
+
+
 all <-ggplot() +
   geom_hline(yintercept = 1, linetype = "dashed", size = 1.2, alpha = .8, color = "#009688") +
   geom_hline(yintercept = 3, color = "#762a83", linetype = "dashed",  size = 1.2, alpha = .8) +
