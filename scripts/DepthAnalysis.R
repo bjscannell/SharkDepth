@@ -13,6 +13,8 @@ library(tidyr)
 library(DHARMa)
 library(tidyr)
 library(ggResidpanel)
+library(lme4)
+library(broom.mixed)
 library(cowplot)
 
 
@@ -348,36 +350,36 @@ ggsave("plots/depth_compare.png", x, dpi = 360, width = 12, height = 8, units = 
 
 
 # glmer -------------------------------------------------------------------
-startTime <- format(Sys.time(), "%H:%M:%S")
-startTime
-m1 <- glmer(above3 ~ species + (1|tag_id) -1,
-            family="binomial", data = df3m,
-            glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))) #can add nAGQ = 0, sacrifices accuracy for speed in processing
-endTime <- format(Sys.time(), "%H:%M:%S")
-endTime #17 minutes
-
-summary(m1)
-printCoefmat(coef(summary(m1)),digits=2)
-resid_panel(m1)
-simulationOutput <- simulateResiduals(fittedModel = m1, plot = F)
-plot(simulationOutput)
-
-startTime <- format(Sys.time(), "%H:%M:%S")
-startTime
-m2<- glmer(above3 ~ species + (1|tag_id) -1, 
-           family=binomial(link = "logit"), data = df3m, 
-           glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-endTime <- format(Sys.time(), "%H:%M:%S")
-endTime #10 minutes
-summary(m2)
-printCoefmat(coef(summary(m2)),digits=2)
-simulationOutput <- simulateResiduals(fittedModel = m2)
-plot(simulationOutput)
-
-startTime <- format(Sys.time(), "%H:%M:%S")
-startTime
-
-set.seed(32)
+# startTime <- format(Sys.time(), "%H:%M:%S")
+# startTime
+# m1 <- glmer(above3 ~ species + (1|tag_id) -1,
+#             family="binomial", data = df3m,
+#             glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb'))) #can add nAGQ = 0, sacrifices accuracy for speed in processing
+# endTime <- format(Sys.time(), "%H:%M:%S")
+# endTime #17 minutes
+# 
+# summary(m1)
+# printCoefmat(coef(summary(m1)),digits=2)
+# resid_panel(m1)
+# simulationOutput <- simulateResiduals(fittedModel = m1, plot = F)
+# plot(simulationOutput)
+# 
+# startTime <- format(Sys.time(), "%H:%M:%S")
+# startTime
+# m2<- glmer(above3 ~ species + (1|tag_id) -1, 
+#            family=binomial(link = "logit"), data = df3m, 
+#            glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+# endTime <- format(Sys.time(), "%H:%M:%S")
+# endTime #10 minutes
+# summary(m2)
+# printCoefmat(coef(summary(m2)),digits=2)
+# simulationOutput <- simulateResiduals(fittedModel = m2)
+# plot(simulationOutput)
+# 
+# startTime <- format(Sys.time(), "%H:%M:%S")
+# startTime
+# 
+# set.seed(32)
 # This guy
 m3 <- glmer(above3 ~ species + (1|tag_id) -1,
             family="binomial", data = df3m,
@@ -388,11 +390,6 @@ summary(m3)
 Anova(m3)
 emmeans(m3, list(pairwise ~ species), adjust = "tukey")
 
-
-library(ggplot2)
-library(lme4)
-library(dplyr)
-library(broom.mixed)
 
 # Extract fixed effects from the model summary
 fixed_effects <- tidy(m3)
@@ -441,13 +438,6 @@ endTime <- format(Sys.time(), "%H:%M:%S")
 endTime #less than a minute...
 summary(m4)
 
-anova(m1, m2, m3, m4)
-
-#some other things to try            verbose=TRUE, nAGQ=0, control=glmerControl(optimizer = "nloptwrap"
-
-# Assuming m1 is your glmer model
-# Expand new_data as before if not already defined
-new_data <- with(df1m, expand.grid(species = unique(species)))
 
 # Predict log odds
 new_data$log_odds <- predict(m1, newdata = new_data, re.form = NA, type = "link")
@@ -485,125 +475,125 @@ ggplot(new_data, aes(x = species)) +
 
 # mcmcm -------------------------------------------------------------------
 
+# # 
+# m3 <- MCMCglmm(above3~species - 1,
+#                random=~tag_id,data=df3m,
+#                family="categorical",
+#                verbose=FALSE)
 # 
-m3 <- MCMCglmm(above3~species - 1,
-               random=~tag_id,data=df3m,
-               family="categorical",
-               verbose=FALSE)
-
-m1 <- MCMCglmm(above1~species - 1,
-               random=~tag_id,data=df1m,
-               family="categorical",
-               verbose=FALSE)
-
-summary(m3)
-summary(m1)
-
-par(mfrow=c(9,2))
-plot(m6$Sol, auto.layout=T)
-
-
-posterior_means3 <- m3$Sol
-posterior_means1 <- m1$Sol
-
-
-posterior_long3 <- posterior_means3 %>% 
-  as.data.frame() %>%
-  rownames_to_column("Parameter") %>%
-  pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
-#mutate(Value = exp(Value))
-
-posterior_long1 <- posterior_means1 %>% 
-  as.data.frame() %>%
-  rownames_to_column("Parameter") %>%
-  pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
-#mutate(Value = exp(Value))
-
-
-ggplot(posterior_long3, aes(y = Iteration, x = Value)) +
-  stat_halfeye() +
-  theme_minimal() +
-  labs(title = "Posterior Distributions with Credible Intervals",
-       x = "Value",
-       y = "Parameter")
-
-ggplot(posterior_long1, aes(y = Iteration, x = Value)) +
-  stat_halfeye() +
-  theme_minimal() +
-  labs(title = "Posterior Distributions with Credible Intervals",
-       x = "Value",
-       y = "Parameter")
-
-species_effects_df3 <- data.frame(posterior_means3) %>%
-  pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
-  mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
-  group_by(species) %>% 
-  summarise(p_mean = mean(p),
-            cilo = quantile(p, probs = 0.025),
-            cihi = quantile(p, probs = 0.975))
-
-species_effects_df1 <- data.frame(posterior_means1) %>%
-  pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
-  mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
-  group_by(species) %>% 
-  summarise(p_mean = mean(p),
-            cilo = quantile(p, probs = 0.025),
-            cihi = quantile(p, probs = 0.975))
-
-
-# species_effects_df <- data.frame(posterior_means) %>%
+# m1 <- MCMCglmm(above1~species - 1,
+#                random=~tag_id,data=df1m,
+#                family="categorical",
+#                verbose=FALSE)
+# 
+# summary(m3)
+# summary(m1)
+# 
+# par(mfrow=c(9,2))
+# plot(m6$Sol, auto.layout=T)
+# 
+# 
+# posterior_means3 <- m3$Sol
+# posterior_means1 <- m1$Sol
+# 
+# 
+# posterior_long3 <- posterior_means3 %>% 
+#   as.data.frame() %>%
+#   rownames_to_column("Parameter") %>%
+#   pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
+# #mutate(Value = exp(Value))
+# 
+# posterior_long1 <- posterior_means1 %>% 
+#   as.data.frame() %>%
+#   rownames_to_column("Parameter") %>%
+#   pivot_longer(-Parameter, names_to = "Iteration", values_to = "Value") #%>% 
+# #mutate(Value = exp(Value))
+# 
+# 
+# ggplot(posterior_long3, aes(y = Iteration, x = Value)) +
+#   stat_halfeye() +
+#   theme_minimal() +
+#   labs(title = "Posterior Distributions with Credible Intervals",
+#        x = "Value",
+#        y = "Parameter")
+# 
+# ggplot(posterior_long1, aes(y = Iteration, x = Value)) +
+#   stat_halfeye() +
+#   theme_minimal() +
+#   labs(title = "Posterior Distributions with Credible Intervals",
+#        x = "Value",
+#        y = "Parameter")
+# 
+# species_effects_df3 <- data.frame(posterior_means3) %>%
 #   pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
-#   mutate(p_mean = exp(posterior_draw)/(1+exp(posterior_draw))) 
-
-
-# ggplot(df, aes(x=p)) +
-#   geom_histogram() +
-#   facet_wrap(~species)
-
-
-
-ggplot(species_effects_df, aes(x = species, y = p_mean)) +
-  geom_point(fill = "skyblue") +
-  geom_errorbar(aes(ymin = cilo, ymax = cihi), width = 0.2) +
-  labs(title = "Predicted Probability of 'Above3' by Species",
-       x = "Species",
-       y = "Predicted Probability") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-ggplot(species_effects_df1, aes(x = species, y = p_mean)) +
-  geom_point(fill = "skyblue") +
-  geom_errorbar(aes(ymin = cilo, ymax = cihi), width = 0.2) +
-  labs(title = "Predicted Probability of 'Above1' by Species",
-       x = "Species",
-       y = "Predicted Probability") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-# a zibeta? ---------------------------------------------------------------
-
-df <- df3m %>% group_by(tag_id) %>% 
-  summarise(n_obs = n(),
-            x= sum(above3), 
-            species = first(species)) %>%  
-  mutate(y = x/n_obs,
-         y = ifelse(y == 1, y-.001,y))
-
-
-fit1 <- brm(above3 ~ species + (1|tag_id),
-            data = df3m, family = bernoulli(link="logit"))
-
-
-fit1 <- brm(y ~ species + (1|tag_id),
-            data = df, family = zero_inflated_beta(link = "logit"))
-
-summary(fit1)
-
-plot(fit1)
-
-plot(conditional_effects(fit1, effects = "speciesDusky"))
-
-get_variables(fit1)
-
+#   mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
+#   group_by(species) %>% 
+#   summarise(p_mean = mean(p),
+#             cilo = quantile(p, probs = 0.025),
+#             cihi = quantile(p, probs = 0.975))
+# 
+# species_effects_df1 <- data.frame(posterior_means1) %>%
+#   pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
+#   mutate(p = exp(posterior_draw)/(1+exp(posterior_draw))) %>% 
+#   group_by(species) %>% 
+#   summarise(p_mean = mean(p),
+#             cilo = quantile(p, probs = 0.025),
+#             cihi = quantile(p, probs = 0.975))
+# 
+# 
+# # species_effects_df <- data.frame(posterior_means) %>%
+# #   pivot_longer(cols = everything(), names_to = "species", values_to = "posterior_draw") %>% 
+# #   mutate(p_mean = exp(posterior_draw)/(1+exp(posterior_draw))) 
+# 
+# 
+# # ggplot(df, aes(x=p)) +
+# #   geom_histogram() +
+# #   facet_wrap(~species)
+# 
+# 
+# 
+# ggplot(species_effects_df, aes(x = species, y = p_mean)) +
+#   geom_point(fill = "skyblue") +
+#   geom_errorbar(aes(ymin = cilo, ymax = cihi), width = 0.2) +
+#   labs(title = "Predicted Probability of 'Above3' by Species",
+#        x = "Species",
+#        y = "Predicted Probability") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# 
+# 
+# ggplot(species_effects_df1, aes(x = species, y = p_mean)) +
+#   geom_point(fill = "skyblue") +
+#   geom_errorbar(aes(ymin = cilo, ymax = cihi), width = 0.2) +
+#   labs(title = "Predicted Probability of 'Above1' by Species",
+#        x = "Species",
+#        y = "Predicted Probability") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# 
+# 
+# # a zibeta? ---------------------------------------------------------------
+# 
+# df <- df3m %>% group_by(tag_id) %>% 
+#   summarise(n_obs = n(),
+#             x= sum(above3), 
+#             species = first(species)) %>%  
+#   mutate(y = x/n_obs,
+#          y = ifelse(y == 1, y-.001,y))
+# 
+# 
+# fit1 <- brm(above3 ~ species + (1|tag_id),
+#             data = df3m, family = bernoulli(link="logit"))
+# 
+# 
+# fit1 <- brm(y ~ species + (1|tag_id),
+#             data = df, family = zero_inflated_beta(link = "logit"))
+# 
+# summary(fit1)
+# 
+# plot(fit1)
+# 
+# plot(conditional_effects(fit1, effects = "speciesDusky"))
+# 
+# get_variables(fit1)
+# 
