@@ -27,9 +27,6 @@ grand_means <- dets_pa_est_tod %>%
 
 sd(grand_means$species_mean)
 
-# acoustic vs psat --------------------------------------------------------
-
-kruskal_result <- kruskal.test(median_press ~ tag_type, data = agg_df)
 
 # summary stats -----------------------------------------------------------
 agg_df <- dets_pa_est_tod %>% 
@@ -50,7 +47,9 @@ stats_df <- agg_df %>%
     SD = sd(press)) %>% 
   mutate(thresher = ifelse(species == "Thresher", 1,0))
 
+# acoustic vs psat --------------------------------------------------------
 
+kruskal_result <- kruskal.test(median_press ~ tag_type, data = agg_df)
 
 
 all <-ggplot() +
