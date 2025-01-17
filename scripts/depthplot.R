@@ -122,11 +122,16 @@ species_count <- species_depth %>% group_by(species) %>%  summarize(count = n())
 species_depth <-species_depth %>% 
   arrange(species, tag_id) %>% 
   mutate(species = factor(species, levels = species_median$species),
-         tag_id = factor(tag_id, levels = unique(tag_id))) %>% ungroup() %>% group_by(species)# %>% 
-  #mutate(species_count = n()) %>% 
-  #arrange(species_count)
+         tag_id = factor(tag_id, levels = unique(tag_id))) %>% ungroup() 
 
+tag_order <- species_depth %>%
+  group_by(species, tag_id) %>%
+  summarize(median_tag_press = median(median_press, na.rm = TRUE)) %>%
+  ungroup() %>%
+  arrange(species, median_tag_press)
 
+species_depth <- species_depth %>%
+  mutate(tag_id = factor(tag_id, levels = unique(tag_order$tag_id)))
 
 
 all <- ggplot(filter(species_depth, thresher_white == 0)) +
