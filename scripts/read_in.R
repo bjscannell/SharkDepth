@@ -10,6 +10,7 @@ library(dplyr)
 library(lubridate)
 library(ggplot2)
 library(patchwork)
+library(vroom)
 
 source("https://raw.githubusercontent.com/bjscannell/lab_code/master/load_vue_csvs.R")
   #I (bvc) am unable to access this file, not sure if it's necessary?
@@ -18,16 +19,15 @@ source("https://raw.githubusercontent.com/bjscannell/lab_code/master/load_vue_cs
 # Code for Acoustics ------------------------------------------------------
 
 
-detections <- read_csv("DATA/acoustic/acoustic_shark_detections_fall2023.csv") %>% clean_names() %>% as.data.frame()
+detections <- read_csv("DATA/acoustic/shark_detections_2022-2024.csv") %>% clean_names() %>% as.data.frame()
 # above csv is filtered through glatos
 
-recLocations <- detections %>% 
-  group_by(station_name, latitude, longitude) %>% 
-  summarise(count = n())
-write.csv(recLocations, "output/receiverLocations.csv")
 
-shark_atag <- read_csv("tag/Sunrise_otn_metadata_tagging.csv") %>% clean_names()
+shark_atag <- read_csv("tag/Sunrise_Orsted_otn_metadata_tagging.csv") %>% clean_names()
 
+tag_meta_files <- list.files("tag/tagmetadata", full.names = T)
+tag_metadata <- vroom(tag_meta_files) 
+tags <- tag_metadata %>% filter(Units == "Meters") %>% pull(`VUE Tag ID`)
 
 # filter for only depth measurements 
 # remove dogfish and a shark that died 
@@ -43,9 +43,10 @@ fdet <- dets %>%
   #rename(detection_timestamp_utc = date_and_time_utc,
         #  receiver_sn = receiver,
        #   transmitter_id = transmitter) %>% 
-  mutate(transmitter_codespace = "A69-9004",
+  mutate(transmitter_codespace = tag_code_space,
          sensor_value = ifelse(sensor_value < 0, 0, sensor_value)) %>% 
-filter(sensor_unit == "m") 
+  filter(transmitter_id %in% tags) %>% 
+  filter(!is.na(sensor_value))
 
 dets_a <- glatos::false_detections(fdet, tf = 3600) %>% filter(passed_filter == 1)
 
