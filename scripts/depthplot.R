@@ -142,8 +142,8 @@ all <- ggplot(filter(species_depth, thresher_white == 0)) +
                color = "grey38",
                size = 0.8,
                lineend='round') +
-  geom_point(aes(x = tag_id, y = median_press, color = species), size = 4) +
-  geom_point(aes(x = tag_id, y = median_press), shape = 1,size = 4 ,colour = "black") +
+  geom_point(aes(x = tag_id, y = median_press, color = species), size = 3) +
+  geom_point(aes(x = tag_id, y = median_press), shape = 1,size = 3 ,colour = "black") +
   annotate("text",
            x = c(1.5, 1.5),
            y = c(1, 3),
@@ -151,11 +151,12 @@ all <- ggplot(filter(species_depth, thresher_white == 0)) +
            color = c( "#009688","#762a83"),
            size=6, 
            hjust = 2.8) +
-  scale_fill_discrete_qualitative(palette = "Dark 3") +
+  #scale_fill_discrete_qualitative(palette = "Dark 3") +
+  scale_color_manual(labels = ~ stringr::str_wrap(.x, width = 5),
+                     values = c("#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69")) +
   theme_classic(base_size=20) +
   scale_y_reverse(breaks = seq(0,30, 5), position = "left") +
   scale_x_discrete(labels=filter(species_depth, thresher_white == 1)$tag_id) +
-  scale_colour_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#ffff33", "#ff7f00", "#984ea3")) +
   labs(title="",
        x ="Individual", y = "Depth (m)") +
   guides(color = guide_legend(nrow = 1)) +
@@ -166,8 +167,9 @@ all <- ggplot(filter(species_depth, thresher_white == 0)) +
         axis.text.y = element_text(size = 17),
         axis.title.y = element_text(size = 26),
         legend.title = element_blank(),
-        legend.position = c(0.5, 1),
+        legend.position = c(0.45, 1),
         legend.direction = "horizontal",
+        legend.margin=margin(c(1,1,1,1)),
         panel.background = element_rect(fill = "white", color = "white"),
         plot.background = element_rect(fill = "white")) 
 
@@ -180,27 +182,27 @@ thresher_white <- ggplot(filter(species_depth, thresher_white == 1)) +
                color = "grey38",
                size = 0.8,
                lineend='round') +
-  geom_point(aes(x = tag_id, y = median_press, color = species), size = 4) +
-  geom_point(aes(x = tag_id, y = median_press), shape = 1,size = 4, colour = "black") +
+  geom_point(aes(x = tag_id, y = median_press, color = species), size = 3) +
+  geom_point(aes(x = tag_id, y = median_press), shape = 1,size = 3, colour = "black") +
   scale_fill_discrete_qualitative(palette = "Dark 3") +
   theme_classic(base_size=20) +
   scale_x_discrete(labels=filter(species_depth, thresher_white == 1)$tag_id)+
   scale_y_reverse(breaks = seq(0,150, 25), position = "left") +
-  scale_colour_manual(values = c("#a65628", "#f781bf", "#999999")) +
-  theme(plot.margin = margin(t = 35, r = 5, b = 51, l = 5, unit = "pt"),,
+  scale_colour_manual(values = c("#fccde5", "#d9d9d9", "#bc80bd")) +
+  theme(plot.margin = margin(t = 35, r = 35, b = 51, l = 5, unit = "pt"),,
         axis.text.x=element_blank(),
         axis.title.x=element_blank(),
         axis.title.y=element_blank(),
         axis.text.y = element_text(size = 17),
         legend.title = element_blank(),
-        legend.position = c(0.45, 1),
+        legend.position = c(0.18, 1),
         legend.direction = "horizontal",
         panel.background = element_rect(fill = "white", color = "white"),
         plot.background = element_rect(fill = "white")) 
 
 
 
-y <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(3, 1))
+y <- plot_grid(all, thresher_white, ncol = 2, rel_widths = c(4, 1))
 
-ggsave("plots/ind_depth_box.png", y, dpi = 360, width = 15, height = 9, units = "in")
+ggsave("plots/ind_depth_box.png", y, dpi = 360, width = 15, height = 10, units = "in")
 

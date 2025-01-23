@@ -79,7 +79,7 @@ for (i in 1:length(df_list)) {
   
   # Check if there's a datetime column; if not combine date and time columns
   # Also check that we change depth to pressure
-  if (any(str_detect(colnames(temp_df), "date.*"))) {
+  if (any(str_detect(colnames(temp_df), "(?=.*date)(?=.*time)"))) {
     temp_df <- temp_df %>% 
       mutate_at(vars(contains('dep')), abs) %>% 
       rename(date_time = matches("date.*"),
@@ -89,6 +89,7 @@ for (i in 1:length(df_list)) {
       select(date_time, temp, press)
   } else {
     temp_df <- temp_df %>% 
+      mutate_at(vars(contains('dep')), abs) %>% 
       rename(temp = matches("temp"),
              press = matches("pres|dep")) %>%  
       mutate(date_time = as.POSIXct(paste(date, time), format ="%Y-%m-%d %H:%M:%S")) %>% 
@@ -100,7 +101,7 @@ for (i in 1:length(df_list)) {
            tag_type = str_extract(names(df_list[i]), "(?<=/)([^_]+)"),
            tag_id = str_match(names(df_list[i]), ".*_([^_]+)\\.[^.]+$")[, 2],
            press = ifelse(press < 0, 0, press)) %>% 
-    filter(press<100)
+    filter(press<200)
   
   
   print(paste("finished file", i, sep =  " "))

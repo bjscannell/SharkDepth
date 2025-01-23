@@ -46,6 +46,15 @@ dets_a %>%
 # Code for PSATS ----------------------------------------------------------
 
 dets_p <- dets_p %>% 
+  ungroup() %>% # fix naming
+  mutate(
+    species = case_when(
+      species == "SandTiger" ~ "Sand Tiger",
+      species == "SmoothHH" ~ "Smooth Hammerhead",
+      species == "ScallopedHH" ~ "Scalloped Hammerhead",
+      TRUE ~ species  
+    )
+  ) %>% 
   group_by(tag_id) %>% 
   filter(date_time > min(date_time) + hours(12)) %>%  # remove the first 12 hours for each tag
   ungroup() %>% 
@@ -96,9 +105,9 @@ dets_p %>% ungroup() %>%
 
 # change acoustic data to fit PSAT format
 
-dets_p <- dets_p %>% select(-temp) %>% 
-  mutate(species = ifelse(species == "SmoothHH", "Smooth Hammerhead", species))
-  
+dets_p <- dets_p %>%
+  select(-temp) 
+
 
 dets_pa <- dets_a %>% 
   rename(date_time = detection_timestamp_utc,
@@ -127,7 +136,7 @@ dets_pa %>% ungroup() %>%
             mean_dep = mean(press),
             per_above3 = sum(above3/length(above3)),
             per_above2 = sum(above2/length(above2)),
-            per_above1 = sum(above1/length(above1))) %>% 
+            per_above1 = sum(above1/length(above1))) %>% View()
   write_csv("output/Full_SpeciesSummary.csv")
 
 

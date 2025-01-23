@@ -34,3 +34,30 @@ x <- ggplot(x, aes(x = date, y = tag_id,
 
 ggsave("plots/abacus.png", x, dpi = 360, width = 15, height = 8, units = "in")
 
+
+# tracking day plot -------------------------------------------------------
+
+df <- dets_pa %>% 
+  mutate(week = as.factor(isoweek(date_time)),
+         date = date(date_time)) %>% 
+  group_by(week) %>% 
+  summarise(n = n_distinct(date)) 
+
+
+ggplot(df) +
+  geom_point(aes(x = week, y = n)) +
+  theme_classic(base_size = 20) +
+  theme(
+    axis.text.x = element_text(face="bold",
+                               angle = 0,
+                               margin = margin(t = 25),
+                               size = 17),
+    axis.text.y = element_text(size = 17),
+    axis.title.x = element_text(size = 26),
+    axis.title.y = element_text(size = 26),
+    legend.position = c(0.1, 0.98),
+    legend.title = element_blank(),
+    #legend.justification = c("left", "top"),
+    legend.direction = "horizontal",
+    panel.background = element_rect(fill = "white", color = "white"),
+    plot.background = element_rect(fill = "white")) 

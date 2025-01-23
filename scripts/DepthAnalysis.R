@@ -45,7 +45,7 @@ stats_df <- agg_df %>%
   group_by(species) %>%
   summarise(
     MedianDepth = median(median_press),
-    Count = n(),
+    Count = n_distinct(tag_id),
     SD = sd(press)) %>% 
   mutate(thresher = ifelse(species == "Thresher", 1,0))
 
@@ -133,53 +133,53 @@ x <- plot_grid(all, thresher, ncol = 2, rel_widths = c(4, 1))
 ggsave("plots/species_depth_box.png", x, dpi = 360, width = 14, height = 9, units = "in")
 
 
-# Non parametric ---------------------------------------------------------
-
-# Shapiro-Wilk test for normality by species
-agg_df %>%
-  filter(species!= "Blacktip" & species!= "Tiger") %>% 
-  group_by(species) %>%
-  do(tidy(shapiro.test(.$median_press)))
-
-# Levene's test for homogeneity of variances
-
-leveneTest(median_press ~ species, data = agg_df)
-
-# non-parametric group differences
-kruskal_result <- kruskal.test(median_press ~ species, data = agg_df)
-print(kruskal_result)
-
-# look at differences per group
-dunn_result <-dunn_test(median_press ~ species, data=agg_df, p.adjust.method ="bonferroni") 
-print(dunn_result) 
-
-
-# Make a plot 
-# Convert to a wide format where each cell represents the p-value between species
-p_matrix <- dcast(dunn_result, group1 ~ group2, value.var = "p.adj")
-
-# Replace NA with 1 for non-comparisons
-p_matrix[is.na(p_matrix)] <- 1
-
-# Ordering matrix rows and columns by species names might help in readability
-species_order <- sort(unique(c(dunn_result$group1, dunn_result$group2)))
-#p_matrix <- p_matrix[match(species_order, p_matrix$group1), match(species_order, names(p_matrix))]
-
-# Plotting heatmap
-heatmap_data <- melt(p_matrix, id.vars = "group1") %>% 
-  mutate(sig = ifelse(value>0.05, 1, 0))
-
-ggplot(heatmap_data, aes(x=variable, y=group1, 
-                         fill=sig)) +
-  geom_tile() +
-  geom_text(data=filter(heatmap_data, sig == "0"), 
-            aes(label = round(value,5),
-                x = variable, y = group1)) +
-  scale_fill_gradient(low = "red", high = "white", limits = c(0, 1), name = "Adj. P-Value") +
-  scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
-  theme_minimal() +
-  theme(legend.position="none") +
-  labs(x = "Species", y = "Species", title = "Heatmap of Adjusted P-Values for Depth Comparisons") 
+# # Non parametric ---------------------------------------------------------
+# 
+# # Shapiro-Wilk test for normality by species
+# agg_df %>%
+#   filter(species!= "Blacktip" & species!= "Tiger") %>% 
+#   group_by(species) %>%
+#   do(tidy(shapiro.test(.$median_press)))
+# 
+# # Levene's test for homogeneity of variances
+# 
+# leveneTest(median_press ~ species, data = agg_df)
+# 
+# # non-parametric group differences
+# kruskal_result <- kruskal.test(median_press ~ species, data = agg_df)
+# print(kruskal_result)
+# 
+# # look at differences per group
+# dunn_result <-dunn_test(median_press ~ species, data=agg_df, p.adjust.method ="bonferroni") 
+# print(dunn_result) 
+# 
+# 
+# # Make a plot 
+# # Convert to a wide format where each cell represents the p-value between species
+# p_matrix <- dcast(dunn_result, group1 ~ group2, value.var = "p.adj")
+# 
+# # Replace NA with 1 for non-comparisons
+# p_matrix[is.na(p_matrix)] <- 1
+# 
+# # Ordering matrix rows and columns by species names might help in readability
+# species_order <- sort(unique(c(dunn_result$group1, dunn_result$group2)))
+# #p_matrix <- p_matrix[match(species_order, p_matrix$group1), match(species_order, names(p_matrix))]
+# 
+# # Plotting heatmap
+# heatmap_data <- melt(p_matrix, id.vars = "group1") %>% 
+#   mutate(sig = ifelse(value>0.05, 1, 0))
+# 
+# ggplot(heatmap_data, aes(x=variable, y=group1, 
+#                          fill=sig)) +
+#   geom_tile() +
+#   geom_text(data=filter(heatmap_data, sig == "0"), 
+#             aes(label = round(value,5),
+#                 x = variable, y = group1)) +
+#   scale_fill_gradient(low = "red", high = "white", limits = c(0, 1), name = "Adj. P-Value") +
+#   scale_x_discrete(labels = function(x) str_replace_all(x, " ", "\n")) +
+#   theme_minimal() +
+#   theme(legend.position="none") +
+#   labs(x = "Species", y = "Species", title = "Heatmap of Adjusted P-Values for Depth Comparisons") 
 
 
 # Time above 3m -----------------------------------------------------------
@@ -330,11 +330,12 @@ x <- ggplot(df_diff) +
             angle = 0, size = 4, color = "#762a83", 
             fontface = "bold", check_overlap = TRUE) +
   labs(title="",
-       x ="Species", y = "Percent Above") +
+       x ="Species", y = "Percent of Occurrences \n <1m and <3m") +
   #color = "Per Species\nAverage") +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic(base_size = 20) +
   theme(
+    plot.margin = margin(r = 18, l = 10, unit = "pt"),
     axis.text.x = element_text(face="bold",
                                angle = 35,
                                margin = margin(t = 25),
@@ -349,7 +350,7 @@ x <- ggplot(df_diff) +
     panel.background = element_rect(fill = "white", color = "white"),
     plot.background = element_rect(fill = "white")) 
 
-ggsave("plots/depth_compare.png", x, dpi = 360, width = 12, height = 8, units = "in")
+ggsave("plots/depth_compare.png", x, dpi = 360, width = 14, height = 8, units = "in")
 
 
 # glmer -------------------------------------------------------------------
