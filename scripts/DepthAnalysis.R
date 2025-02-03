@@ -21,6 +21,7 @@ library(cowplot)
 # Species Grand Means -----------------------------------------------------
 
 grand_means <- dets_pa_est_tod %>%
+  filter(tod == "Day") %>% 
   group_by(tag_id) %>% 
   mutate(ind_mean = mean(press)) %>% ungroup() %>% 
   group_by(species) %>% 
@@ -305,11 +306,15 @@ diff <- df_diff %>%
 
 
 
+df_diff
+df3mS
+df1mS
+
 x <- ggplot(df_diff) +
   geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = 1, alpha = .8, color = "#009688") +
   geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = 1, alpha = .8) +
   geom_segment(data = df3mS,
-               aes(x = reorder(species, percent_above3), y = percent_above3,
+               aes(x = reorder(species, percent_above3, decreasing = T), y = percent_above3,
                    yend = df1mS$percent_above1, xend = df1mS$species),
                color = "black",
                size = 1) + 
@@ -321,11 +326,11 @@ x <- ggplot(df_diff) +
             angle = 90, size = 6, vjust = 1.8) +
   scale_color_manual(values = c("#009688","#762a83"),
                      labels = c("1 m", "3 m")) +
-  geom_text(x = 1 , y = stats_1$mean - 0.018, 
+  geom_text(x = 10 , y = stats_1$mean - 0.018, 
             label = "1 METER MEAN", 
             angle = 0, size = 4, color = "#009688",
             fontface = "bold", check_overlap = TRUE) +
-  geom_text(x = 1, y = stats_3$mean - 0.018,
+  geom_text(x = 10, y = stats_3$mean - 0.018,
             label = "3 METER MEAN",
             angle = 0, size = 4, color = "#762a83", 
             fontface = "bold", check_overlap = TRUE) +
@@ -343,7 +348,7 @@ x <- ggplot(df_diff) +
     axis.text.y = element_text(size = 17),
     axis.title.x = element_text(vjust = 7, size = 26),
     axis.title.y = element_text(size = 26),
-    legend.position = c(0.1, 0.98),
+    legend.position = c(0.92, 0.98),
     legend.title = element_blank(),
     #legend.justification = c("left", "top"),
     legend.direction = "horizontal",
