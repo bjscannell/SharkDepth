@@ -43,21 +43,33 @@ df <- dets_pa %>%
   group_by(week) %>% 
   summarise(n = n_distinct(date)) 
 
+df_species <- dets_pa %>% 
+  mutate(week = as.factor(isoweek(date_time)),
+         date = date(date_time)) %>% 
+  group_by(week, species) %>% 
+  summarise(n = n_distinct(date)) 
 
-ggplot(df) +
-  geom_point(aes(x = week, y = n)) +
+
+
+x <- ggplot() +
+  geom_bar(data = df_species, aes(x = week, y = n, fill = species),
+           position="stack", stat="identity") +
+  labs(title="",
+       x ="Week of Year", y = "Count of Distinct Days") + 
+  scale_fill_manual(values = c("#fb8072", "#bebada", "#b3de69", "#80b1d3", "#fdb462", 
+                                  "#8dd3c7", "#ffffb3","#bc80bd", "#fccde5", "#d9d9d9")) +
   theme_classic(base_size = 20) +
   theme(
-    axis.text.x = element_text(face="bold",
-                               angle = 0,
-                               margin = margin(t = 25),
+    axis.text.x = element_text(margin = margin(t = 25),
                                size = 17),
     axis.text.y = element_text(size = 17),
     axis.title.x = element_text(size = 26),
     axis.title.y = element_text(size = 26),
-    legend.position = c(0.1, 0.98),
+    legend.position = "bottom",
     legend.title = element_blank(),
-    #legend.justification = c("left", "top"),
     legend.direction = "horizontal",
     panel.background = element_rect(fill = "white", color = "white"),
     plot.background = element_rect(fill = "white")) 
+
+
+ggsave("plots/tracking_days.png", x, dpi = 360, width = 15, height = 10, units = "in")

@@ -111,7 +111,7 @@ dets_p <- dets_p %>%
 
 dets_pa <- dets_a %>% 
   rename(date_time = detection_timestamp_utc,
-         tag_id = transmitter_id,
+         tag_id = transmitter_serial,
          species = common_name_e,
          press = sensor_value) %>% 
   mutate(tag_type = "acoustic") %>% 
@@ -136,7 +136,7 @@ dets_pa %>% ungroup() %>%
             mean_dep = mean(press),
             per_above3 = sum(above3/length(above3)),
             per_above2 = sum(above2/length(above2)),
-            per_above1 = sum(above1/length(above1))) %>% View()
+            per_above1 = sum(above1/length(above1))) %>%
   write_csv("output/Full_SpeciesSummary.csv")
 
 

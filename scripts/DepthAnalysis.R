@@ -324,11 +324,11 @@ x <- ggplot(df_diff) +
                      labels = c("1 m", "3 m")) +
   geom_text(x = 10 , y = stats_1$mean - 0.018, 
             label = "1 METER MEAN", 
-            angle = 0, size = 4, color = "#009688",
+            angle = 0, size = 5, color = "#009688",
             fontface = "bold", check_overlap = TRUE) +
   geom_text(x = 10, y = stats_3$mean - 0.018,
             label = "3 METER MEAN",
-            angle = 0, size = 4, color = "#762a83", 
+            angle = 0, size = 5, color = "#762a83", 
             fontface = "bold", check_overlap = TRUE) +
   labs(title="",
        x ="Species", y = "Percent of Occurrences \n <1m and <3m") +
@@ -341,7 +341,7 @@ x <- ggplot(df_diff) +
                                angle = 35,
                                margin = margin(t = 25),
                                size = 17),
-    axis.text.y = element_text(size = 17),
+    axis.text.y = element_text(size = 18),
     axis.title.x = element_text(vjust = 7, size = 26),
     axis.title.y = element_text(size = 26),
     legend.position = c(0.92, 0.98),
