@@ -306,10 +306,6 @@ diff <- df_diff %>%
 
 
 
-df_diff
-df3mS
-df1mS
-
 x <- ggplot(df_diff) +
   geom_hline(yintercept = stats_1$mean, linetype = "dashed", size = 1, alpha = .8, color = "#009688") +
   geom_hline(yintercept = stats_3$mean, color = "#762a83", linetype = "dashed",  size = 1, alpha = .8) +
