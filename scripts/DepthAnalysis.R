@@ -17,11 +17,12 @@ library(lme4)
 library(broom.mixed)
 library(cowplot)
 
+dets_pa_est_day <- dets_pa_est_tod %>%
+  filter(tod == "Day")
 
 # Species Grand Means -----------------------------------------------------
 
-grand_means <- dets_pa_est_tod %>%
-  filter(tod == "Day") %>% 
+grand_means <- dets_pa_est_day %>% 
   group_by(tag_id) %>% 
   mutate(ind_mean = mean(press)) %>% ungroup() %>% 
   group_by(species) %>% 
@@ -32,8 +33,7 @@ sd(grand_means$species_mean)
 
 
 # summary stats -----------------------------------------------------------
-agg_df <- dets_pa_est_tod %>% 
-  filter(tod == "Day") %>% 
+agg_df <- dets_pa_est_day %>% 
   group_by(tag_id) %>% 
   mutate(median_press = median(press),
          median_press = ifelse(median_press <= 0, 0.01, median_press),
@@ -185,8 +185,7 @@ ggsave("plots/species_depth_box.png", x, dpi = 360, width = 14, height = 9, unit
 
 # Time above 3m -----------------------------------------------------------
 
-df3m <- dets_pa_est_tod %>% 
-  filter(tod == "Day") %>% 
+df3m <- dets_pa_est_day %>% 
   mutate(above3 = ifelse(press<3,1,0)) %>% 
   group_by(tag_id) %>% 
   mutate(count = n()) %>% ungroup() %>% 
@@ -196,8 +195,7 @@ df3m <- dets_pa_est_tod %>%
 #   geom_point(aes(x=tag_id, y = count)) +
 #   scale_y_log10()
 
-df3mI <- dets_pa_est_tod %>% 
-  filter(tod == "Day") %>% 
+df3mI <- dets_pa_est_day %>%  
   mutate(above3 = ifelse(press<3,1,0))  %>% 
   group_by(tag_id) %>% 
   summarize(
@@ -206,8 +204,7 @@ df3mI <- dets_pa_est_tod %>%
     percent_above3 = (above3_count / total_count) 
   ) #%>% filter(total_count > 100)
 
-df3mS <-dets_pa_est_tod %>% 
-  filter(tod == "Day") %>% 
+df3mS <- dets_pa_est_day %>% 
   mutate(above3 = ifelse(press<3,1,0))  %>% 
   group_by(species) %>% 
   summarize(
@@ -235,8 +232,7 @@ df3mS <-dets_pa_est_tod %>%
 
 # Time above 1m -----------------------------------------------------------
 
-df1m <- dets_pa_est_tod %>% 
-  filter(tod == "Day") %>% 
+df1m <- dets_pa_est_day %>% 
   mutate(above1 = ifelse(press<=1,1,0)) %>% 
   group_by(tag_id) %>% 
   mutate(count = n()) %>% ungroup() %>% 
@@ -252,8 +248,7 @@ df1mI <- dets_pa_est_tod %>%
     percent_above1 = (above1_count / total_count) 
   ) #%>% filter(total_count > 100)
 
-df1mS <-dets_pa_est_tod %>% 
-  filter(tod == "Day") %>% 
+df1mS <- dets_pa_est_day %>% 
   mutate(above1 = ifelse(press<=1,1,0))  %>% 
   group_by(species) %>% 
   summarize(
